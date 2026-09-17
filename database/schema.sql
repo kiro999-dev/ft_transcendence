@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS "organizations" (
     "name" varchar(255) NOT NULL,
     "created_at" timestamp NOT NULL,
     "updated_at" timestamp NOT NULL,
-    "deleted_at" timestamp NOT NULL
+    "deleted_at" timestamp 
 );
 
 CREATE TABLE IF NOT EXISTS "users" (
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "role" varchar(20) NOT NULL DEFAULT 'owner',
     "created_at" timestamp NOT NULL,
     "updated_at" timestamp NOT NULL,
-    "deleted_at" timestamp NOT NULL
+    "deleted_at" timestamp 
 );
 
 CREATE TABLE IF NOT EXISTS "properties" (
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "properties" (
     "metadata" json,
     "created_at" timestamp NOT NULL,
     "updated_at" timestamp NOT NULL,
-    "deleted_at" timestamp NOT NULL
+    "deleted_at" timestamp 
   
 );
 
