@@ -96,17 +96,19 @@ model messages {
 }
 
 model organizations {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String            @db.VarChar(255)
-  created_at      DateTime          @default(now()) @db.Timestamp(6)
-  updated_at      DateTime          @default(now()) @db.Timestamp(6)
-  ai_settings     ai_settings?
-  bookings        bookings[]
-  calendar_events calendar_events[]
-  leads           leads[]
-  properties      properties[]
-  users           users[]
-  visitors        visitors[]
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String             @db.VarChar(255)
+  status            String             @default("active") @db.VarChar(20)
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime           @default(now()) @db.Timestamp(6)
+  ai_settings       ai_settings?
+  bookings          bookings[]
+  calendar_events   calendar_events[]
+  leads             leads[]
+  properties        properties[]
+  users             users?
+  visitors          visitors[]
+  whatsapp_sessions whatsapp_sessions?
 }
 
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
@@ -161,18 +163,17 @@ model property_images {
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model users {
   id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id String            @db.Uuid
+  organization_id String?           @unique @db.Uuid
   first_name      String            @db.VarChar(255)
   last_name       String            @db.VarChar(255)
   email           String            @unique @db.VarChar(255)
   password_hash   String
-  token           String?
   phone           String?           @db.VarChar(50)
   role            String            @default("owner") @db.VarChar(20)
   created_at      DateTime          @default(now()) @db.Timestamp(6)
   updated_at      DateTime          @default(now()) @db.Timestamp(6)
   calendar_events calendar_events[]
-  organizations   organizations     @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations   organizations?    @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model visitors {
@@ -187,4 +188,13 @@ model visitors {
   conversations   conversations[]
   leads           leads[]
   organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model whatsapp_sessions {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id String        @unique @db.Uuid
+  session_name    String        @unique @db.VarChar(255)
+  created_at      DateTime      @default(now()) @db.Timestamp(6)
+  updated_at      DateTime      @default(now()) @db.Timestamp(6)
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

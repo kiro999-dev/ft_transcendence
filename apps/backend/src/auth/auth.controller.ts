@@ -8,7 +8,8 @@ export class AuthController {
   constructor(private prisma: PrismaService) {}
   @Post('/sign-up')
   async signUp(@Body() SignUpdata: SignUpDto) {
-    const { email, password, organizationName ,firstName,lastName,phone,} = SignUpdata;
+    const { email, password, organizationName, firstName, lastName, phone } =
+      SignUpdata;
     const emailInuUse = await this.prisma.users.findUnique({
       where: { email },
     });
@@ -17,22 +18,33 @@ export class AuthController {
       throw new BadRequestException('Email already in use');
     }
 
-    // const organization = await this.prisma.organizations.create({
+    const result = await this.prisma.$transaction(async (tx) => {
+      const organization = await tx.organizations.create({
+        data: {
+          name: organizationName,
+        },
+      });
 
-    //   data:{
-    //     name:organizationName
-    //   },
-    // })
-    const hashedPassword = bcrypt.hash(password, 10);
-    const user = await this.prisma.users.create({
-      data: {
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        email: dto.email,
-        passwordHash: passwordHash,
-        phone: dto.phone,
-        organizationId: organizationId,
-      },
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const user = await tx.users.create({
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          password_hash: hashedPassword,
+          phone,
+          organization_id: organization.id,
+        },
+      });
+
+      return { organization, user };
     });
+    return {
+      message: 'Account created successfully',
+      userId: result.user.id,
+      organizationId: result.organization.id,
+      role:result.user.role
+    };
   }
 }
