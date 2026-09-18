@@ -100,7 +100,6 @@ model organizations {
   name            String            @db.VarChar(255)
   created_at      DateTime          @db.Timestamp(6)
   updated_at      DateTime          @db.Timestamp(6)
-  deleted_at      DateTime?         @db.Timestamp(6)
   ai_settings     ai_settings?
   bookings        bookings[]
   calendar_events calendar_events[]
@@ -128,7 +127,6 @@ model properties {
   metadata           Json?                @db.Json
   created_at         DateTime             @db.Timestamp(6)
   updated_at         DateTime             @db.Timestamp(6)
-  deleted_at         DateTime?            @db.Timestamp(6)
   bookings           bookings[]
   conversations      conversations[]
   leads              leads[]
@@ -163,14 +161,15 @@ model property_images {
 model users {
   id              String            @id @db.Uuid
   organization_id String            @db.Uuid
-  name            String            @db.VarChar(255)
+  first_name      String            @db.VarChar(255)
+  last_name       String            @db.VarChar(255)
   email           String            @unique @db.VarChar(255)
   password_hash   String
+  token           String?
   phone           String?           @db.VarChar(50)
   role            String            @default("owner") @db.VarChar(20)
   created_at      DateTime          @db.Timestamp(6)
   updated_at      DateTime          @db.Timestamp(6)
-  deleted_at      DateTime?         @db.Timestamp(6)
   calendar_events calendar_events[]
   organizations   organizations     @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
