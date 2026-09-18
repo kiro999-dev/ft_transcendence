@@ -11,6 +11,7 @@ export class AuthController {
     const emailInuUse = await this.prisma.users.findUnique({
       where: { email: SignUpdata.email },
     });
+    
     if (emailInuUse) {
       throw new BadRequestException('Email already in use');
     }
