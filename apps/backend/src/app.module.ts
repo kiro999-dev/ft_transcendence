@@ -22,8 +22,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config'; // 1. Import Confi
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
+      global:true,
       useFactory: async (configService: ConfigService) => ({
-        global:true,
         secret: configService.get<string>('SECRET') 
       }),
     }),
