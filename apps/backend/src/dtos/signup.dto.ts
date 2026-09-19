@@ -35,7 +35,7 @@ export class SignUpDto {
   })
   lastName: string;
 
-  @MaxLength(256)
+  @MaxLength(255)
   @IsEmail()
   email: string;
 

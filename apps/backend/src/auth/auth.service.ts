@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { SignUpDto } from '../dtos/signup.dto';
+import { LoginDTO } from '../dtos/login.dto';
 import * as bcrypt from 'bcrypt';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+  ) {}
+
   async signup(SignUpdata: SignUpDto) {
     const { email, password, organizationName, firstName, lastName, phone } =
       SignUpdata;
@@ -46,5 +52,31 @@ export class AuthService {
       organizationId: result.organization.id,
       role: result.user.role,
     };
+  }
+
+  async login(LogInData: LoginDTO) {
+    const { email, password } = LogInData;
+    const user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+    if (!user) throw new UnauthorizedException('incorrect email or password ');
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch)
+      throw new UnauthorizedException('incorrect email or password ');
+
+    return `hi ${user.first_name + ' ' + user.last_name} `;
+  }
+
+  async generateToken(userId: string, organizationId: string, role: string) {
+    const payload = {
+      sub: userId,
+      organizationId,
+      role,
+    };
+    const accessToken = this.jwt.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    return accessToken;
   }
 }
