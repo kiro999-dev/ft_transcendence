@@ -5,7 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // 1. Import ConfigService
+import { ConfigModule } from '@nestjs/config'; 
 
 @Module({
   controllers: [AppController],
@@ -20,12 +20,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config'; // 1. Import Confi
     }),
    
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      global:true,
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('SECRET') 
-      }),
+      global:true
     }),
   ],
 })
