@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { TokensModule } from './tokens/tokens.module';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -26,6 +27,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         secret: configService.get<string>('ACCESS_TOKEN_SECRET') 
       }),
     }),
+   
+    TokensModule,
   ],
 })
 export class AppModule {}
