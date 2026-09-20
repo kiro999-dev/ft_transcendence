@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "last_name" varchar(255) NOT NULL,
     "email" varchar(255) UNIQUE NOT NULL,
     "password_hash" text NOT NULL,
+    "token_hash" text,
     "phone" varchar(50),
     "role" varchar(20) NOT NULL DEFAULT 'owner',
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
