@@ -56,4 +56,16 @@ export class UsersService {
         });
         return result;
     }
+
+    async updateUserPassword(Id:string,NewPassword_hash:string)
+    {
+       await  this.prisma.users.update({
+            where: {
+                id: Id,
+            },
+            data:{
+                password_hash:NewPassword_hash
+            }
+        })
+    }
 }

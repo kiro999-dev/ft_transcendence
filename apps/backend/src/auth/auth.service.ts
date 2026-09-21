@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { TokensService } from '../tokens/tokens.service';
+import { changePasswordDto } from '../dtos/changePassword.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,15 +16,14 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private userService: UsersService,
-    private Token: TokensService
-  ) { }
+    private Token: TokensService,
+  ) {}
 
   async signup(SignUpdata: SignUpDto) {
     const { email } = SignUpdata;
     const emailInuUse = await this.userService.findUserbyEmail(email);
 
-    if (emailInuUse)
-      throw new BadRequestException('Email already in use');
+    if (emailInuUse) throw new BadRequestException('Email already in use');
     const result = await this.userService.creatUserWithOrganization(SignUpdata);
     return {
       message: 'Account created successfully',
@@ -81,5 +81,16 @@ export class AuthService {
     await this.Token.saveToken(refreshToken, payload.sub);
     return { accessToken, refreshToken };
   }
-
+  async changePassword(chpassdata: changePasswordDto, userId: string) {
+    const user = await this.userService.findUserbyId(userId);
+    if (!user) throw new UnauthorizedException('there is no user with this id');
+    const isMatch = await bcrypt.compare(
+      chpassdata.OldPassword,
+      user.password_hash,
+    );
+    if (!isMatch) throw new UnauthorizedException('inccorect password');
+    const NewPassword_hash = await bcrypt.hash(chpassdata.NewPassword, 10);
+    await this.userService.updateUserPassword(userId, NewPassword_hash);
+    
+  }
 }
