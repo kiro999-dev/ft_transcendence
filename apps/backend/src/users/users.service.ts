@@ -20,7 +20,7 @@ export class UsersService {
         });
         return user
     }
-    async updateUserToken(userId: string, refreshTokenHased: string) {
+    async updateUserToken(userId: string, refreshTokenHased: string ) {
         await this.prisma.users.update({
             where: {
                 id: userId,
@@ -57,15 +57,40 @@ export class UsersService {
         return result;
     }
 
-    async updateUserPassword(Id:string,NewPassword_hash:string)
-    {
-       await  this.prisma.users.update({
+    async updateUserPassword(Id: string, NewPassword_hash: string) {
+        await this.prisma.users.update({
             where: {
                 id: Id,
             },
-            data:{
-                password_hash:NewPassword_hash
+            data: {
+                password_hash: NewPassword_hash
             }
         })
+    }
+    async addRestToken(id: string, restToken: string | null, expireDate: Date | null) {
+        await this.prisma.users.update({
+            where: {
+                id
+            },
+            data:
+            {
+                reset_token: restToken,
+                reset_token_expires_at: expireDate
+            }
+        })
+    }
+    async findUserbyToken(reset_token: string) {
+        const user = await this.prisma.users.findFirst({
+            where:
+            {
+                reset_token
+            }
+        })
+        let expireDate = null
+        if(user)
+            expireDate = user.reset_token_expires_at;
+        if(!expireDate || expireDate < new Date())
+            return null
+        return user
     }
 }

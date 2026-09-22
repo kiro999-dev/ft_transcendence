@@ -9,6 +9,9 @@ import { randomUUID } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { TokensService } from '../tokens/tokens.service';
 import { changePasswordDto } from '../dtos/changePassword.dto';
+import { nanoid } from 'nanoid';
+import { EmailService } from '../email/email/email.service';
+import { sendEmailDto } from '../dtos/email.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +20,8 @@ export class AuthService {
     private config: ConfigService,
     private userService: UsersService,
     private Token: TokensService,
-  ) {}
+    private emailService: EmailService
+  ) { }
 
   async signup(SignUpdata: SignUpDto) {
     const { email } = SignUpdata;
@@ -91,6 +95,49 @@ export class AuthService {
     if (!isMatch) throw new UnauthorizedException('inccorect password');
     const NewPassword_hash = await bcrypt.hash(chpassdata.NewPassword, 10);
     await this.userService.updateUserPassword(userId, NewPassword_hash);
-    
+
+  }
+  async forgetPassword(email: string) {
+    const user = await this.userService.findUserbyEmail(email);
+    if (user) {
+      const expireDate = new Date()
+      expireDate.setMinutes(expireDate.getMinutes() + 15)
+      const restToken = nanoid(64)
+      await this.userService.addRestToken(user.id, restToken, expireDate);
+      const subject = 'Reset Link';
+      const link = `http://localhost/reset-password?token=${restToken}`
+      const html = `Hi ${user.first_name},
+              We received a request to reset your password.
+              <a href="${link}">Reset Password</a>
+              This link will expire in 15 minutes.
+              If you didn't request this, you can ignore this email.
+              Thanks,<br>
+              auto Estat Team`
+      const emaildata: sendEmailDto = {
+        recipients: user.email,
+        subject,
+        html
+      }
+      await this.emailService.sendEmail(emaildata);
+    }
+
+    return {
+      message: 'Check your email. The reset link expires in 15 minutes.'
+    }
+  }
+
+  async resetPassword(new_password: string, token: string) {
+    const user = await this.userService.findUserbyToken(token);
+    if (!user) {
+      throw new BadRequestException('Invalid token or expired')
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await this.userService.updateUserPassword(user.id, hashedPassword);
+    await this.userService.addRestToken(user.id, null,null)
+    return {
+      message: 'Password has been reset successfully',
+    };
+
   }
 }

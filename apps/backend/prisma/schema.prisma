@@ -7,7 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+model organizations {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String             @db.VarChar(255)
+  status            String             @default("active") @db.VarChar(20)
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime           @default(now()) @db.Timestamp(6)
+  ai_settings       ai_settings?
+  bookings          bookings[]
+  calendar_events   calendar_events[]
+  leads             leads[]
+  properties        properties[]
+  users             users?
+  visitors          visitors[]
+  whatsapp_sessions whatsapp_sessions?
+}
+
 model ai_settings {
   id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id         String        @unique @db.Uuid
@@ -19,7 +34,6 @@ model ai_settings {
   organizations           organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model bookings {
   id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id String            @db.Uuid
@@ -38,7 +52,6 @@ model bookings {
   calendar_events calendar_events[]
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model calendar_events {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id String        @db.Uuid
@@ -55,7 +68,6 @@ model calendar_events {
   users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model conversations {
   id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   visitor_id      String      @db.Uuid
@@ -67,7 +79,6 @@ model conversations {
   messages        messages[]
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model leads {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id String        @db.Uuid
@@ -85,7 +96,6 @@ model leads {
   visitors        visitors      @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model messages {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   conversation_id String        @db.Uuid
@@ -95,23 +105,6 @@ model messages {
   conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model organizations {
-  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name              String             @db.VarChar(255)
-  status            String             @default("active") @db.VarChar(20)
-  created_at        DateTime           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime           @default(now()) @db.Timestamp(6)
-  ai_settings       ai_settings?
-  bookings          bookings[]
-  calendar_events   calendar_events[]
-  leads             leads[]
-  properties        properties[]
-  users             users?
-  visitors          visitors[]
-  whatsapp_sessions whatsapp_sessions?
-}
-
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model properties {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id    String               @db.Uuid
@@ -138,7 +131,6 @@ model properties {
   property_images    property_images[]
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model property_documents {
   id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   property_id String     @db.Uuid
@@ -150,7 +142,6 @@ model property_documents {
   properties  properties @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model property_images {
   id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   property_id   String     @db.Uuid
@@ -160,21 +151,22 @@ model property_images {
   properties    properties @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model users {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id String?           @unique @db.Uuid
-  first_name      String            @db.VarChar(255)
-  last_name       String            @db.VarChar(255)
-  email           String            @unique @db.VarChar(255)
-  password_hash   String
-  token_hash      String?
-  phone           String?           @db.VarChar(50)
-  role            String            @default("owner") @db.VarChar(20)
-  created_at      DateTime          @default(now()) @db.Timestamp(6)
-  updated_at      DateTime          @default(now()) @db.Timestamp(6)
-  calendar_events calendar_events[]
-  organizations   organizations?    @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organization_id        String?           @unique @db.Uuid
+  first_name             String            @db.VarChar(255)
+  last_name              String            @db.VarChar(255)
+  email                  String            @unique @db.VarChar(255)
+  password_hash          String
+  token_hash             String?
+  phone                  String?           @db.VarChar(50)
+  role                   String            @default("owner") @db.VarChar(20)
+  created_at             DateTime          @default(now()) @db.Timestamp(6)
+  updated_at             DateTime          @default(now()) @db.Timestamp(6)
+  reset_token            String?
+  reset_token_expires_at DateTime?         @db.Timestamptz(6)
+  calendar_events        calendar_events[]
+  organizations          organizations?    @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model visitors {

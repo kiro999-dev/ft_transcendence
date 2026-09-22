@@ -6,6 +6,8 @@ import { LoginDTO } from '../dtos/login.dto';
 import { refreshTokenDto } from '../dtos/refreshToken.dto';
 import { changePasswordDto } from '../dtos/changePassword.dto';
 import { AuthGuard } from '../guards/auth.guard';
+import { ForgetPasswordDto } from '../dtos/forgetpass.dto';
+import { ResetPasswdDto } from '../dtos/resetpassword.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private auth: AuthService) {}
@@ -24,12 +26,28 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('change-password')
+  @Put('change-password')
   async changePassword(@Body() chpassdata: changePasswordDto, @Req() req: any) {
     const userid = req.user.sub;
     await this.auth.changePassword(chpassdata, userid);
     return {
       message: 'Password changed successfully',
     };
+  }
+
+  @Post('forget-password')
+  async forgetPassword(@Body() emailDto:ForgetPasswordDto)
+  {
+    const {email} = emailDto;
+
+   return await this.auth.forgetPassword(email)
+  }
+
+    @Post('reset-password')
+  async resetPassword(@Body() ResetPasswdDataDto:ResetPasswdDto)
+  {
+    const {NewPassword,reset_token} = ResetPasswdDataDto;
+
+   return await this.auth.resetPassword(NewPassword,reset_token);
   }
 }

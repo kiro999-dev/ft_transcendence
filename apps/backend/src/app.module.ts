@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config'; 
 import { TokensModule } from './tokens/tokens.module';
+import { EmailModule } from './email/email/email.module';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -29,6 +30,7 @@ import { TokensModule } from './tokens/tokens.module';
     }),
    
     TokensModule,
+    EmailModule
   ],
 })
 export class AppModule {}
