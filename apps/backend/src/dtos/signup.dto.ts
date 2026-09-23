@@ -35,6 +35,10 @@ export class SignUpDto {
   })
   lastName: string;
 
+
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/, {
+    message: 'must be a valid email',
+  })
   @MaxLength(255)
   @IsEmail()
   email: string;

@@ -1,12 +1,13 @@
-"use client";
 
 import { useState } from "react";
+import { CiMenuBurger } from "react-icons/ci";
+import { RxCross2 } from "react-icons/rx";
 
 export const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="border-b border-slate-200 bg-white">
+    <nav className="border-b border-slate-200 bg-white sticky top-0 z-50  backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-8">
         {/* Logo */}
         <div>
@@ -41,30 +42,12 @@ export const NavBar = () => {
           </button>
         </div>
 
-    
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="rounded-lg p-2 text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
           aria-label="Toggle menu"
         >
-          {isOpen ? (
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          ) : (
-
-            <img src="/burger-icon.svg" alt="Menu" className="h-6 w-6" />
-          )}
+          {isOpen ? <RxCross2 className="text-blue-600" />: <CiMenuBurger className="text-blue-600"/>}
         </button>
       </div>
 

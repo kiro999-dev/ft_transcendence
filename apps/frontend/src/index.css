@@ -22,3 +22,6 @@
     BlinkMacSystemFont, 'Segoe UI',
     Roboto, sans-serif;
 }
+html {
+  scroll-behavior: smooth;
+}
