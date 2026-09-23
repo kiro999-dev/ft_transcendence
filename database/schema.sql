@@ -5,9 +5,7 @@ CREATE TABLE IF NOT EXISTS "organizations" (
     "name" varchar(255) NOT NULL,
     "status" varchar(20) NOT NULL DEFAULT 'active',
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "organizations_status_check"
-        CHECK ("status" IN ('active', 'suspended', 'deleted'))
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS "users" (
@@ -23,14 +21,8 @@ CREATE TABLE IF NOT EXISTS "users" (
     "role" varchar(20) NOT NULL DEFAULT 'owner',
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "users_role_check"
-        CHECK ("role" IN ('owner', 'super_admin')),
-    CONSTRAINT "users_role_organization_check"
-        CHECK (
-            ("role" = 'owner' AND "organization_id" IS NOT NULL)
-            OR
-            ("role" = 'super_admin' AND "organization_id" IS NULL)
-        )
+    "reset_token" text,
+    "reset_token_expires_at" TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS "properties" (
