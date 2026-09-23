@@ -1,0 +1,24 @@
+@import "tailwindcss";
+:root {
+  /* Brand */
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #EFF6FF;
+
+  /* Surfaces */
+  --color-background: #FFFFFF;
+  --color-background-alt: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-dark: #0F172A;
+
+  /* Text */
+  --color-text-heading: #0F172A;
+  --color-text-body: #475569;
+  --color-text-muted: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* Typography */
+  --font-primary: 'Manrope', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
+}
