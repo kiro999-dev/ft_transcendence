@@ -1,5 +1,5 @@
 import { Public } from "../../const";
-
+import { Link } from "react-router";
 interface FeatureCardProps {
   imgSrc: string;
   header: string;
@@ -58,8 +58,7 @@ const featuresData = [
 
 // One shared rhythm for every section below the hero
 const sectionSpacing = "px-6 py-20 sm:py-24 lg:py-28";
-const sectionTitle =
-  "text-center text-2xl font-extrabold text-slate-900 sm:text-3xl";
+const sectionTitle ="text-center text-2xl font-extrabold text-slate-900 sm:text-3xl";
 
 const FeatureCard = ({
   imgSrc,
@@ -117,9 +116,11 @@ export const Hero = () => {
           </p>
 
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-            <button className="w-full rounded-lg bg-(--color-primary) px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-(--color-primary-hover) hover:shadow-md sm:w-auto">
-              Get Started
-            </button>
+            <Link to="/sign-up">
+                <button className="w-full rounded-lg bg-(--color-primary) px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-(--color-primary-hover) hover:shadow-md sm:w-auto">
+                Get Started
+              </button>
+            </Link>
 
             <a href="#how-it-works">
               <button className="w-full rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 sm:w-auto">

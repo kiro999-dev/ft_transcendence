@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 
 interface Credentials {
   email: string;
@@ -115,12 +116,12 @@ export const Login = () => {
               Remember me
             </label>
 
-            <a
-              href="/forgot-password"
+            <Link
+              to="/forgot-password"
               className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           <button
@@ -133,12 +134,12 @@ export const Login = () => {
 
         <p className="mt-8 border-t border-slate-100 pt-6 text-center text-sm text-slate-600">
           Don't have an account?{" "}
-          <a
-            href="/sign-up"
+          <Link
+            to="/sign-up"
             className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
           >
             Create an agency account
-          </a>
+          </Link>
         </p>
       </div>
     </div>
