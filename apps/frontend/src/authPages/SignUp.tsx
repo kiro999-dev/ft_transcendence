@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
+import toast from "react-hot-toast";
+
+
 
 interface SignUpData {
   organizationName: string;
@@ -65,13 +68,13 @@ const inputFields: InputFieldConfig[] = [
   },
 ];
 type Field = keyof SignUpData;
-type Errors = Partial<Record<Field, string>>; 
+type Errors = Partial<Record<Field, string>>;
 
 const normalizeOrganizationName = (value: string) =>
   value.trim().replace(/\s+/g, " ");
 
 
-const EMAIL_REGEX =/^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/;
 
 
 const validateName = (value: string, label: string): string | undefined => {
@@ -193,6 +196,8 @@ const InputField = ({
 
 
 export const SignUp = () => {
+
+  
   const [formData, setSignUpData] = useState<SignUpData>({
     organizationName: "",
     firstName: "",
@@ -207,7 +212,7 @@ export const SignUp = () => {
     setSignUpData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
 
@@ -221,10 +226,29 @@ export const SignUp = () => {
       ...formData,
       organizationName: normalizeOrganizationName(formData.organizationName),
     };
-    // TODO: send `payload` to your sign-up API
-    console.log(payload);
-  };
+    try {
+      const response = await fetch("http://localhost:3000/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Failed to create account");
+        return;
+      }
+
+      toast.success("Account created successfully!");
+
+     
+    } catch (error) {
+
+    }
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-8 shadow-xl sm:p-10">

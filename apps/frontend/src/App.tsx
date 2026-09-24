@@ -4,12 +4,13 @@ import { SignUp } from "./authPages/SignUp"
 import { Routes, Route } from "react-router";
 import { NotFound } from "./Notfound/Notfound";
 import { ForgotPassword } from "./authPages/ForgotPassword";
+import { Toaster } from "react-hot-toast";
 function App() {
 
 
   return (
    <>
-
+      <Toaster />
     <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/sign-up" element={<SignUp />} />
