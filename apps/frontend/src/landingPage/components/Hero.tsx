@@ -1,4 +1,5 @@
 import { Public } from "../../const";
+
 interface FeatureCardProps {
   imgSrc: string;
   header: string;
@@ -11,46 +12,70 @@ interface StepsProps {
   stepString: string;
   isLast?: boolean;
 }
+
 const stepsData = [
+  { stepNumber: "01", stepString: "Lead Messages" },
+  { stepNumber: "02", stepString: "AI Collects Information" },
+  { stepNumber: "03", stepString: "AI Qualifies the Lead" },
+  { stepNumber: "04", stepString: "Visit Is Booked" },
+  { stepNumber: "05", stepString: "Agency Gets the Lead" },
+];
+
+const featuresData = [
   {
-    stepNumber: '01',
-    stepString: 'Lead Messages'
+    imgSrc: Public.icons.chatIcon,
+    header: "24/7 WhatsApp Assistant",
+    paragraph:
+      "Engage leads instantly at any time of day, right where they already are.",
   },
   {
-    stepNumber: '02',
-    stepString: 'AI Collects Information'
+    imgSrc: Public.icons.tasks,
+    header: "Automatic Lead Qualification",
+    paragraph:
+      "Qualify leads automatically and identify the prospects most likely to convert.",
   },
   {
-    stepNumber: '03',
-    stepString: 'AI Qualifies the Lead'
+    imgSrc: Public.icons.ai,
+    header: "AI Property Assistant",
+    paragraph: "Answer client questions instantly using your property data.",
   },
   {
-    stepNumber: '04',
-    stepString: 'Visit Is Booked'
+    imgSrc: Public.icons.calander,
+    header: "Smart Scheduling",
+    paragraph: "Book property visits automatically without manual follow-up.",
   },
   {
-    stepNumber: '05',
-    stepString: 'Agency Gets the Lead'
+    imgSrc: Public.icons.profileLead,
+    header: "Lead Profiles",
+    paragraph: "Keep track of every lead and their interaction history.",
   },
-]
-const FeatureCard = ({ imgSrc, header, paragraph, className = "" }: FeatureCardProps) => {
+  {
+    imgSrc: Public.icons.autoLeads,
+    header: "Automated Follow-ups",
+    paragraph: "Nurture leads automatically and never miss an opportunity.",
+  },
+];
+
+// One shared rhythm for every section below the hero
+const sectionSpacing = "px-6 py-20 sm:py-24 lg:py-28";
+const sectionTitle =
+  "text-center text-2xl font-extrabold text-slate-900 sm:text-3xl";
+
+const FeatureCard = ({
+  imgSrc,
+  header,
+  paragraph,
+  className = "",
+}: FeatureCardProps) => {
   return (
     <div
       className={`rounded-2xl bg-white p-6 shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${className}`}
     >
-      <img
-        src={imgSrc}
-        alt=""
-        className="mb-5 h-8 w-8"
-      />
+      <img src={imgSrc} alt="" className="mb-5 h-8 w-8" />
 
-      <h2 className="mb-2 text-lg font-bold text-slate-900">
-        {header}
-      </h2>
+      <h3 className="mb-2 text-lg font-bold text-slate-900">{header}</h3>
 
-      <p className="text-sm leading-6 text-slate-600">
-        {paragraph}
-      </p>
+      <p className="text-sm leading-6 text-slate-600">{paragraph}</p>
     </div>
   );
 };
@@ -63,31 +88,23 @@ const Step = ({ stepNumber, stepString, isLast }: StepsProps) => {
           <p className="font-bold text-white">{stepNumber}</p>
         </div>
 
-        <h1 className="mt-3 max-w-35 text-center text-sm font-bold text-black sm:text-base">
+        <h3 className="mt-3 max-w-35 text-center text-sm font-bold text-black sm:text-base">
           {stepString}
-        </h1>
+        </h3>
       </div>
 
       {!isLast && (
-        <>
-         
-          <div className="mt-6 hidden h-0.5 min-w-8 flex-1 bg-slate-300 sm:block" />
-
-          
-          
-        </>
+        <div className="mt-6 hidden h-0.5 min-w-8 flex-1 bg-slate-300 sm:block" />
       )}
     </div>
   );
 };
 
-
-
-
 export const Hero = () => {
   return (
     <div>
-      <section  className="mx-auto flex min-h-[calc(100vh-73px)] max-w-7xl flex-col items-center justify-center gap-12 px-6 py-16 sm:px-8 lg:flex-row lg:gap-16 lg:py-20">
+      {/* Hero */}
+      <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-7xl flex-col items-center justify-center gap-12 px-6 py-16 sm:px-8 lg:flex-row lg:gap-16 lg:py-20">
         <div className="w-full max-w-2xl text-center lg:text-left">
           <h1 className="mb-6 text-4xl font-extrabold leading-[1.15] tracking-[-0.02em] text-(--color-heading) sm:text-5xl lg:text-5xl">
             Turn WhatsApp Leads Into{" "}
@@ -104,9 +121,11 @@ export const Hero = () => {
               Get Started
             </button>
 
-            <button className="w-full rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 sm:w-auto">
-              See How It Works
-            </button>
+            <a href="#how-it-works">
+              <button className="w-full rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 sm:w-auto">
+                See How It Works
+              </button>
+            </a>
           </div>
 
           <div className="mt-8 flex items-center justify-center gap-2 text-sm text-(--color-muted) lg:justify-start">
@@ -128,63 +147,47 @@ export const Hero = () => {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
+      {/* Features */}
+      <section
+        id="features"
+        className={`${sectionSpacing}`}
+      >
         <div className="mx-auto max-w-6xl">
-
-          {/* Section heading */}
-          <h1 className="mb-10 text-center text-2xl font-extrabold text-slate-900 sm:text-3xl">
+          <h2 className={`mb-12 ${sectionTitle}`}>
             Everything You Need to Convert More Leads
-          </h1>
+          </h2>
 
-          {/* Cards */}
-          <div id="features" className=" grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <FeatureCard
-              imgSrc={Public.icons.chatIcon}
-              header="24/7 WhatsApp Assistant"
-              paragraph="Engage leads instantly at any time of day, right where they already are."
-            />
-
-            <FeatureCard
-              imgSrc={Public.icons.tasks}
-              header="Automatic Lead Qualification"
-              paragraph="Engage leads instantly at any time of day, right where they already are."
-            />
-
-            <FeatureCard
-              imgSrc={Public.icons.ai}
-              header="AI Property Assistant"
-              paragraph="Answer client questions instantly using your property data."
-            />
-
-            <FeatureCard
-              imgSrc={Public.icons.calander}
-              header="Smart Scheduling"
-              paragraph="Book property visits automatically without manual follow-up."
-            />
-
-            <FeatureCard
-              imgSrc={Public.icons.profileLead}
-              header="Lead Profiles"
-              paragraph="Keep track of every lead and their interaction history."
-            />
-            <FeatureCard
-              imgSrc={Public.icons.autoLeads}
-              header="Automated Follow-ups"
-              paragraph="Nurture leads automatically and never miss an opportunity."
-            />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featuresData.map((feature) => (
+              <FeatureCard
+                key={feature.header}
+                imgSrc={feature.imgSrc}
+                header={feature.header}
+                paragraph={feature.paragraph}
+              />
+            ))}
           </div>
         </div>
       </section>
-      <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20 ">
-        <div className="flex flex-col gap-8 sm:flex-row sm:gap-0">
-          {stepsData.map((step, index) => (
-            <Step
-              key={step.stepNumber}
-              stepNumber={step.stepNumber}
-              stepString={step.stepString}
-              isLast={index === stepsData.length - 1}
-            />
-          ))}
+
+      {/* How it works */}
+      <section
+        id="how-it-works"
+        className={`bg-white ${sectionSpacing}`}
+      >
+        <div className="mx-auto max-w-6xl">
+          <h2 className={`mb-14 ${sectionTitle}`}>How It Works</h2>
+
+          <div className="flex flex-col gap-8 sm:flex-row sm:gap-0">
+            {stepsData.map((step, index) => (
+              <Step
+                key={step.stepNumber}
+                stepNumber={step.stepNumber}
+                stepString={step.stepString}
+                isLast={index === stepsData.length - 1}
+              />
+            ))}
+          </div>
         </div>
       </section>
     </div>

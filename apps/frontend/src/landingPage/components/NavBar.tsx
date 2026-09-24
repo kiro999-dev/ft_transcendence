@@ -23,7 +23,6 @@ export const NavBar = () => {
           >
             Features
           </a>
-
           <a
             href="#how-it-works"
             className="text-sm font-semibold text-slate-600 transition-colors hover:text-(--color-primary)"
@@ -69,13 +68,10 @@ export const NavBar = () => {
             >
               How It Works
             </a>
-
             <div className="h-px bg-slate-200" />
-
             <button className="text-left text-sm font-semibold text-slate-700 hover:text-slate-900">
               Log In
             </button>
-
             <button className="rounded-lg bg-(--color-primary) px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-(--color-primary-hover)">
               Get Started
             </button>
