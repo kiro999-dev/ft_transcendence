@@ -21,7 +21,7 @@ export class TokensService {
         });
         const jti = randomUUID();
         const refreshToken = this.jwt.sign(
-          { sub: userId,jti },
+          { sub: userId,jti,organizationId },
           {
             secret: this.config.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
             expiresIn: '7d',

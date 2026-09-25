@@ -203,7 +203,7 @@ export const SignUp = () => {
     setSignUpData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const newErrors = validate(formData);

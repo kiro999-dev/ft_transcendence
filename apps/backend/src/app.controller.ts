@@ -18,7 +18,7 @@ export class AppController {
   @Get()
   @UseGuards(AuthGuard)
   getHello(@Req() req:AuthenticatedRequest ): any {
-    console.log(req.user);
+   
     return `you login mr ${req.user.sub}`
   }
 }

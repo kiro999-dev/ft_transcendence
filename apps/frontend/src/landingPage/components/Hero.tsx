@@ -1,5 +1,5 @@
 import { Public } from "../../const";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 interface FeatureCardProps {
   imgSrc: string;
   header: string;

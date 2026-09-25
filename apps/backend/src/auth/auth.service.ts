@@ -57,12 +57,14 @@ export class AuthService {
   }
 
   async refreshToken(token: string) {
+   
     let payload;
     try {
       payload = this.jwt.verify(token, {
         secret: this.config.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
       });
     } catch {
+    
       throw new UnauthorizedException('invalid refresh token');
     }
     const user = await this.userService.findUserbyId(payload.sub);

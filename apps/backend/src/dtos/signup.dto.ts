@@ -57,6 +57,10 @@ export class SignUpDto {
   })
   password: string;
 
+
+  @Matches(/^\+?[1-9]\d{7,14}$/, {
+    message: 'Phone number must contain only digits, optionally starting with +',
+  })
   @IsPhoneNumber()
   phone: string;
 }

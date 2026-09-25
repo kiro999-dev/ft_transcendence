@@ -8,9 +8,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config'; 
 import { TokensModule } from './tokens/tokens.module';
 import { EmailModule } from './email/email/email.module';
+import { OrganizationService } from './organization/organization.service';
+import { OrganizationModule } from './organization/organization.module';
 @Module({
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, OrganizationService],
   imports: [
     AuthModule, 
     UsersModule, 
@@ -30,7 +32,8 @@ import { EmailModule } from './email/email/email.module';
     }),
    
     TokensModule,
-    EmailModule
+    EmailModule,
+    OrganizationModule
   ],
 })
 export class AppModule {}

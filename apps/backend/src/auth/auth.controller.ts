@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req, Put,Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Put, Res } from '@nestjs/common';
 import { Body } from '@nestjs/common';
 import { SignUpDto } from '../dtos/signup.dto';
 import { AuthService } from './auth.service';
@@ -11,35 +11,36 @@ import { ResetPasswdDto } from '../dtos/resetpassword.dto';
 import type { Response } from 'express';
 @Controller('auth')
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService) { }
   @Post('sign-up')
   async signUp(@Body() SignUpData: SignUpDto) {
     return this.auth.signup(SignUpData);
   }
 
   @Post('login')
-  async login(@Body() LogInData: LoginDTO,@Res({ passthrough: true }) res: Response) {
-    const {accessToken,refreshToken} = await this.auth.login(LogInData);
-      res.cookie('refreshToken', refreshToken, {
+  async login(@Body() LogInData: LoginDTO, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken } = await this.auth.login(LogInData);
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false, //should be true in prod
       sameSite: 'strict',
       path: '/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    return accessToken
+    return {accessToken,}
   }
   @Post('refresh')
-  async refreshToken(@Body() token: refreshTokenDto,@Res({ passthrough: true }) res: Response) {
-    const {refreshToken ,accessToken} = await this.auth.refreshToken(token.refreshToken);
-      res.cookie('refreshToken', refreshToken, {
+  async refreshToken(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+    const getRefreshToken = req.cookies.refreshToken;
+    const { refreshToken, accessToken } = await this.auth.refreshToken(getRefreshToken);
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false, //should be true in prod
       sameSite: 'strict',
       path: '/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    return accessToken
+    return { accessToken, }
   }
 
   @UseGuards(AuthGuard)
@@ -53,25 +54,22 @@ export class AuthController {
   }
 
   @Post('forget-password')
-  async forgetPassword(@Body() emailDto:ForgetPasswordDto)
-  {
-    const {email} = emailDto;
+  async forgetPassword(@Body() emailDto: ForgetPasswordDto) {
+    const { email } = emailDto;
 
-   return await this.auth.forgetPassword(email)
+    return await this.auth.forgetPassword(email)
   }
 
-    @Post('reset-password')
-  async resetPassword(@Body() ResetPasswdDataDto:ResetPasswdDto)
-  {
-    const {NewPassword,reset_token} = ResetPasswdDataDto;
+  @Post('reset-password')
+  async resetPassword(@Body() ResetPasswdDataDto: ResetPasswdDto) {
+    const { NewPassword, reset_token } = ResetPasswdDataDto;
 
-   return await this.auth.resetPassword(NewPassword,reset_token);
+    return await this.auth.resetPassword(NewPassword, reset_token);
   }
 
   @Post('logout')
   @UseGuards(AuthGuard)
-  async logout(@Req() req:any)
-  {
+  async logout(@Req() req: any) {
     const userid = req.user.sub
     return await this.auth.logout(userid);
   }

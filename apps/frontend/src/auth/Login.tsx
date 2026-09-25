@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import {useAuth} from "./AuthContext"
+import { useNavigate } from "react-router-dom";
 interface Credentials {
   email: string;
   password: string;
@@ -50,6 +52,7 @@ const InputLogin = ({
 };
 
 export const Login = () => {
+  const navigate = useNavigate()
   const [credentials, setCredentials] = useState<Credentials>({
     email: "",
     password: "",
@@ -64,30 +67,32 @@ export const Login = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("http://localhost:3000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
+ const { setAccessToken } = useAuth();
 
-      const data = await response.json();
+const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+ 
+  e.preventDefault();
+  try {
+    const response = await fetch("http://localhost:3000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // required so the Set-Cookie header is accepted
+      body: JSON.stringify(credentials),
+    });
 
-      if (!response.ok) {
-        toast.error(data.message || "Failed to login");
-        return;
-      }
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      toast.success("Welcome back! You're now signed in.");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Something went wrong",
-      );
+    const data = await response.json();
+
+    if (!response.ok) {
+      toast.error(data.message || "Failed to login");
+      return;
     }
-  };
+    setAccessToken(data.accessToken); 
+    toast.success("Welcome back! You're now signed in.");
+    navigate("/dashboard");
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Something went wrong");
+  }
+};
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-xl sm:p-10">

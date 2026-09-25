@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MdOutlineMarkEmailUnread } from "react-icons/md";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 
 
@@ -19,7 +19,7 @@ export const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     // TODO: send `email` to your forgot-password API
     setSubmitted(true);

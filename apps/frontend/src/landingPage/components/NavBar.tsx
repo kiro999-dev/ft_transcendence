@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { CiMenuBurger } from "react-icons/ci";
 import { RxCross2 } from "react-icons/rx";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 export const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
