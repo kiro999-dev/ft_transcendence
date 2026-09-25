@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-
+import toast from "react-hot-toast";
 interface Credentials {
   email: string;
   password: string;
@@ -64,11 +64,30 @@ export const Login = () => {
     });
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: send `credentials` and `rememberMe` to your login API
-  };
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Failed to login");
+        return;
+      }
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      toast.success("Welcome back! You're now signed in.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong",
+      );
+    }
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-xl sm:p-10">

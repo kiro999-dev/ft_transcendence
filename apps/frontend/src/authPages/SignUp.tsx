@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import toast from "react-hot-toast";
-
-
+import { useNavigate } from "react-router-dom";
 
 interface SignUpData {
   organizationName: string;
@@ -73,9 +72,8 @@ type Errors = Partial<Record<Field, string>>;
 const normalizeOrganizationName = (value: string) =>
   value.trim().replace(/\s+/g, " ");
 
-
-const EMAIL_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/;
-
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/;
 
 const validateName = (value: string, label: string): string | undefined => {
   if (!value) return `${label} is required`;
@@ -88,7 +86,6 @@ const validateName = (value: string, label: string): string | undefined => {
 const validate = (data: SignUpData): Errors => {
   const errors: Errors = {};
 
-
   const agency = normalizeOrganizationName(data.organizationName);
   if (!agency) errors.organizationName = "Agency name is required";
   else if (agency.length < 2)
@@ -96,10 +93,8 @@ const validate = (data: SignUpData): Errors => {
   else if (agency.length > 150)
     errors.organizationName = "Agency name must be at most 150 characters";
 
-
   errors.firstName = validateName(data.firstName, "First name");
   errors.lastName = validateName(data.lastName, "Last name");
-
 
   if (!data.email) errors.email = "Email is required";
   else if (data.email.length > 255)
@@ -107,12 +102,10 @@ const validate = (data: SignUpData): Errors => {
   else if (!EMAIL_REGEX.test(data.email))
     errors.email = "Enter a valid email address";
 
-
   if (!data.phone) errors.phone = "Phone number is required";
   else if (!isValidPhoneNumber(data.phone))
     errors.phone =
       "Enter a valid phone number with country code, e.g. +212600000000";
-
 
   const { password } = data;
   if (!password) errors.password = "Password is required";
@@ -129,7 +122,6 @@ const validate = (data: SignUpData): Errors => {
 
   return errors;
 };
-
 
 interface InputProps {
   name: Field;
@@ -173,10 +165,11 @@ const InputField = ({
         onChange={onChange}
         aria-invalid={!!error}
         aria-describedby={error ? `${name}-error` : undefined}
-        className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 ${error
-          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-          : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
-          }`}
+        className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 ${
+          error
+            ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+            : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
+        }`}
       />
 
       {error ? (
@@ -194,10 +187,8 @@ const InputField = ({
   );
 };
 
-
 export const SignUp = () => {
-
-  
+  const navigate = useNavigate();
   const [formData, setSignUpData] = useState<SignUpData>({
     organizationName: "",
     firstName: "",
@@ -214,7 +205,6 @@ export const SignUp = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-
 
     const newErrors = validate(formData);
     setErrors(newErrors);
@@ -243,12 +233,14 @@ export const SignUp = () => {
       }
 
       toast.success("Account created successfully!");
-
-     
+      setTimeout(() => {
+        navigate("/login");
+      }, 500);
     } catch (error) {
-
+      console.log(error);
+      toast.error("Failed to create account");
     }
-  }
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-8 shadow-xl sm:p-10">
