@@ -8,8 +8,7 @@ type UserData = {
   FullName: string
 }
 export const Dashboard = () => {
-  const { isLoading, user } = useAuth()
-
+  const {user ,isLoading} = useAuth()
   const [userdata, setUserData] = useState<UserData>({
     email: "",
     FullName: ""
@@ -22,7 +21,7 @@ export const Dashboard = () => {
       email,
       FullName: `${first_name} ${last_name}`
     });
-  }, [user])
+  },[user] )
   return (
     <div>
       {isLoading ? <Loading></Loading> : <Sidebar userEmail={userdata.email} userName={userdata.FullName}></Sidebar>}

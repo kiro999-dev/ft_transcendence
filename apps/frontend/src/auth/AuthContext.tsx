@@ -17,7 +17,8 @@ interface AuthContextType {
   setAccessToken: (token: string | null) => void;
   isLoading: boolean;
   user: User | null;
-  isAuthenticated:boolean
+  isAuthenticated:boolean,
+  setUser:(user:User | null)=>void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated,setIsAuthenticated] = useState<boolean> (false);
+  const isAuthenticated = user !== null;
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -65,7 +66,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const userData = await userResponse.json();
         setUser(userData);
-        setIsAuthenticated(true);
 
       } catch (error) {
         console.error(error);
@@ -86,7 +86,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAccessToken,
         isLoading,
         user,
-        isAuthenticated
+        isAuthenticated,
+        setUser
       }}
     >
       {children}

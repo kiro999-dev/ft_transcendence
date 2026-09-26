@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import {useAuth} from "./AuthContext"
+import { useAuth } from "./AuthContext"
 import { useNavigate } from "react-router-dom";
 interface Credentials {
   email: string;
@@ -67,32 +67,41 @@ export const Login = () => {
     });
   };
 
- const { setAccessToken } = useAuth();
+  const { setAccessToken, setUser} = useAuth();
 
-const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
- 
-  e.preventDefault();
-  try {
-    const response = await fetch("http://localhost:3000/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // required so the Set-Cookie header is accepted
-      body: JSON.stringify(credentials),
-    });
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
 
-    const data = await response.json();
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // required so the Set-Cookie header is accepted
+        body: JSON.stringify(credentials),
+      });
 
-    if (!response.ok) {
-      toast.error(data.message || "Failed to login");
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Failed to login");
+        return;
+      }
+      setAccessToken(data.accessToken);
+      const userResponse = await fetch("http://localhost:3000/users/me", {
+        headers: {
+          Authorization: `Bearer ${data.accessToken}`,
+        },
+      });
+
+      const userData = await userResponse.json();
+
+      setUser(userData);
+      toast.success("Welcome back! You're now signed in.");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
     }
-    setAccessToken(data.accessToken); 
-    toast.success("Welcome back! You're now signed in.");
-    navigate("/dashboard");
-  } catch (error) {
-    toast.error(error instanceof Error ? error.message : "Something went wrong");
-  }
-};
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-xl sm:p-10">

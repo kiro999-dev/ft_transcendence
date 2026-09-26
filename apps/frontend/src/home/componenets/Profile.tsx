@@ -42,7 +42,7 @@ const Field = ({ name, type, value, label, onChange, disabled }: FieldProps) => 
 );
 
 export const Profile = () => {
-    const { accessToken, isLoading, user } = useAuth();
+    const { accessToken, isLoading, user, setUser } = useAuth();
     const [data, setData] = useState<ProfileData>({
         firstName: "",
         lastName: "",
@@ -70,12 +70,13 @@ export const Profile = () => {
     };
 
     const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+         e.preventDefault();
         const payload = {
             firstName: data.firstName,
             lastName: data.lastName,
             phone: data.phone
         }
-        e.preventDefault();
+       
         try {
             console.log(data)
             const res = await fetch("http://localhost:3000/users/me", {
@@ -86,7 +87,7 @@ export const Profile = () => {
                 },
                 body: JSON.stringify(payload),
             })
-            if (!res) {
+            if (!res.ok) {
                 toast.error("something went wrong please try again ")
                 return
             }
@@ -94,6 +95,14 @@ export const Profile = () => {
             if (message.success) {
                 toast.success(message.message)
                 setSaved(true);
+                if (user) {
+                    setUser({
+                        ...user,
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        phone: data.phone,
+                    });
+                }
             }
             else {
                 const messageobj = message.message;

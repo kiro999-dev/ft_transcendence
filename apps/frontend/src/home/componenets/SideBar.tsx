@@ -68,9 +68,9 @@ export const Sidebar = ({
           const isActive = current === item.href;
 
           return (
-            <a
+            <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               onClick={() => setCurrent(item.href)}
               aria-current={isActive ? "page" : undefined}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
@@ -81,7 +81,7 @@ export const Sidebar = ({
             >
               <Icon  />
               {item.name}
-            </a>
+            </Link>
           );
         })}
       </nav>
