@@ -112,7 +112,7 @@ interface UserMenuProps {
 const UserMenu = ({ userName }: UserMenuProps) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
+  const {logout} = useAuth()
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -154,6 +154,7 @@ const UserMenu = ({ userName }: UserMenuProps) => {
           <button
             onClick={() => {
               setOpen(false);
+              logout()
             }}
             className="block w-full px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50"
           >
@@ -171,7 +172,7 @@ const UserMenu = ({ userName }: UserMenuProps) => {
 
 export const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user,logout } = useAuth();
   const closeMobileMenu = () => setIsOpen(false);
 
   return (
@@ -241,7 +242,7 @@ export const NavBar = () => {
                 <button
                   onClick={() => {
                     closeMobileMenu();
-
+                    logout()
                   }}
                   className="text-left text-sm font-semibold text-red-600"
                 >

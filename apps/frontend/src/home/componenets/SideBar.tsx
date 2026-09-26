@@ -4,7 +4,9 @@ import { FaUserFriends } from "react-icons/fa";
 import { CiCalendar } from "react-icons/ci";
 import { IoHomeOutline } from "react-icons/io5";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import { HiOutlineLogout } from "react-icons/hi";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
 
 type IconProps = { className?: string };
 
@@ -53,6 +55,7 @@ export const Sidebar = ({
   userEmail ,
 }: SidebarProps) => {
   const [current, setCurrent] = useState(activeHref);
+  const { logout } = useAuth();
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
@@ -86,7 +89,7 @@ export const Sidebar = ({
         })}
       </nav>
 
-      {/* Profile */}
+      {/* Profile + logout */}
       <div className="border-t border-slate-200 p-3">
         <Link
           to="/me"
@@ -108,6 +111,14 @@ export const Sidebar = ({
 
           <ChevronIcon className="h-4 w-4 shrink-0 text-slate-400" />
         </Link>
+
+        <button
+          onClick={logout}
+          className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+        >
+          <HiOutlineLogout className="text-xl" />
+          Log out
+        </button>
       </div>
     </aside>
   );

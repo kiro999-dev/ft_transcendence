@@ -17,8 +17,9 @@ interface AuthContextType {
   setAccessToken: (token: string | null) => void;
   isLoading: boolean;
   user: User | null;
-  isAuthenticated:boolean,
-  setUser:(user:User | null)=>void;
+  isAuthenticated: boolean;
+  setUser: (user: User | null) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isAuthenticated = user !== null;
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -79,6 +81,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []);
 
+  const logout = async () => {
+    try {
+      await fetch("http://localhost:3000/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      // Even if the request fails, still clear local state below,
+      // so the user isn't stuck "logged in" on a dead session.
+    } finally {
+      setAccessToken(null);
+      setUser(null);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -87,7 +108,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         user,
         isAuthenticated,
-        setUser
+        setUser,
+        logout,
       }}
     >
       {children}
