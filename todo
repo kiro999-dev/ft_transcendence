@@ -1,6 +1,8 @@
-#1 add logout in frontend
-#2 make the owner add users with role staff
-#3 creat admin panale
+ add logout in frontend :done
+ add rember me to backend
+ add add change password to frontend
+ make the owner add users with role staff
+ creat admin panale
 {
     view all orgs with theire users
     creat update and delet org 
