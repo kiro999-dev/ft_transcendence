@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import { Loading } from "../../auth/ProtectedRout";
-import { useEffect } from "react";
 import toast from "react-hot-toast";
 
 interface ProfileData {
@@ -43,51 +42,27 @@ const Field = ({ name, type, value, label, onChange, disabled }: FieldProps) => 
 );
 
 export const Profile = () => {
-    const { accessToken, isLoading } = useAuth();
+    const { accessToken, isLoading, user } = useAuth();
     const [data, setData] = useState<ProfileData>({
-
         firstName: "",
         lastName: "",
         email: "",
         phone: "",
     });
-    const [profileLoading, setProfileLoading] = useState(true);
     const [saved, setSaved] = useState(false);
-
     useEffect(() => {
-        if (!accessToken) return;
-
-        const getProfile = async () => {
-            try {
-                const response = await fetch("http://localhost:3000/users/me", {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-
-                });
-                if (!response.ok) {
-                    toast.error("Error happened");
-                    return;
+        if (user)
+            setData(
+                {
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    email: user.email,
+                    phone: user.phone
                 }
+            )
+    }, [user])
 
-                const data = await response.json();
-                console.log(data);
-                setData({
-                    firstName: data.first_name ?? "",
-                    lastName: data.last_name ?? "",
-                    email: data.email ?? "",
-                    phone: data.phone ?? "",
-                });
-            } catch {
-                toast.error("Error happened");
-            } finally {
-                setProfileLoading(false);
-            }
-
-        };
-
-        getProfile();
-    }, [accessToken]);
-
-    if (isLoading || profileLoading) return <Loading />;
+    if (isLoading) return <Loading />;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setData({ ...data, [e.target.name]: e.target.value });
@@ -96,9 +71,9 @@ export const Profile = () => {
 
     const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         const payload = {
-            firstName:data.firstName,
-            lastName:data.lastName,
-            phone:data.phone
+            firstName: data.firstName,
+            lastName: data.lastName,
+            phone: data.phone
         }
         e.preventDefault();
         try {
@@ -116,22 +91,20 @@ export const Profile = () => {
                 return
             }
             const message = await res.json()
-            if (message.success)
-            {
+            if (message.success) {
                 toast.success(message.message)
                 setSaved(true);
             }
-            else
-            {
-                const messageobj =  message.message;
-                messageobj.map((msg:string)=>{
+            else {
+                const messageobj = message.message;
+                messageobj.map((msg: string) => {
                     toast.error(msg)
                 })
             }
         } catch (error) {
             toast.error("something went wrong please try again")
         }
-       
+
     };
 
     const initials = `${data.firstName[0] ?? ""}${data.lastName[0] ?? ""}`;
