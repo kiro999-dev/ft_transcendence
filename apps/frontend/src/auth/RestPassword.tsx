@@ -16,15 +16,15 @@ const validatePassword = (password: string): string | undefined => {
 
 export const ResetPassword = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const reset_token = searchParams.get("token");
 
-  const [password, setPassword] = useState("");
+  const [NewPassword, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string>();
   const [confirmError, setConfirmError] = useState<string>();
   const [done, setDone] = useState(false);
 
-  if (!token) {
+  if (!reset_token) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white px-4 py-12">
         <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-xl sm:p-10">
@@ -46,12 +46,12 @@ export const ResetPassword = () => {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const pwError = validatePassword(password);
+    const pwError = validatePassword(NewPassword);
     const matchError =
-      confirmPassword !== password ? "Passwords do not match" : undefined;
+      confirmPassword !== NewPassword ? "Passwords do not match" : undefined;
 
     setPasswordError(pwError);
     setConfirmError(matchError);
@@ -61,7 +61,7 @@ export const ResetPassword = () => {
       const res = await fetch("http://localhost:3000/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ reset_token, NewPassword }),
       });
 
       if (!res.ok) {
@@ -124,7 +124,7 @@ export const ResetPassword = () => {
               id="password"
               name="password"
               type="password"
-              value={password}
+              value={NewPassword}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               aria-invalid={!!passwordError}

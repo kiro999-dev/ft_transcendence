@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import * as bcrypt from 'bcrypt';
 import { SignUpDto } from '../dtos/signup.dto';
 import { UpdateProfileDto } from '../dtos/updateProfile.dto';
-import { last } from 'rxjs';
+
 @Injectable()
 export class UsersService {
 

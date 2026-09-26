@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { useAuth } from "../../auth/AuthContext";
 import { Loading } from "../../auth/ProtectedRout";
 import toast from "react-hot-toast";
@@ -10,17 +11,43 @@ interface ProfileData {
     phone: string;
 }
 
+type Field = keyof ProfileData;
+type Errors = Partial<Record<Field, string>>;
+
 interface FieldProps {
     name: keyof ProfileData;
     type: string;
     value: string;
     label: string;
-    disabled?: boolean
+    disabled?: boolean;
+    error?: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 
-const Field = ({ name, type, value, label, onChange, disabled }: FieldProps) => (
+const validateName = (value: string, label: string): string | undefined => {
+    if (!value) return `${label} is required`;
+    if (value.length < 2) return `${label} must be at least 2 characters`;
+    if (value.length > 100) return `${label} must be at most 100 characters`;
+    if (/\s/.test(value)) return `${label} must not contain spaces`;
+    return undefined;
+};
+
+const validate = (data: ProfileData): Errors => {
+    const errors: Errors = {};
+
+    errors.firstName = validateName(data.firstName, "First name");
+    errors.lastName = validateName(data.lastName, "Last name");
+
+    if (!data.phone) errors.phone = "Phone number is required";
+    else if (!isValidPhoneNumber(data.phone))
+        errors.phone =
+            "Enter a valid phone number with country code, e.g. +212600000000";
+
+    return errors;
+};
+
+const Field = ({ name, type, value, label, onChange, disabled, error }: FieldProps) => (
     <div>
         <label
             htmlFor={name}
@@ -36,8 +63,19 @@ const Field = ({ name, type, value, label, onChange, disabled }: FieldProps) => 
             type={type}
             value={value}
             onChange={onChange}
-            className="w-full rounded-lg border disabled:text-gray-400 border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+            aria-invalid={!!error}
+            aria-describedby={error ? `${name}-error` : undefined}
+            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 disabled:text-gray-400 transition-colors focus:outline-none focus:ring-2 ${error
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
+                }`}
         />
+
+        {error && (
+            <p id={`${name}-error`} role="alert" className="mt-1.5 text-xs text-red-600">
+                {error}
+            </p>
+        )}
     </div>
 );
 
@@ -49,6 +87,7 @@ export const Profile = () => {
         email: "",
         phone: "",
     });
+    const [errors, setErrors] = useState<Errors>({});
     const [saved, setSaved] = useState(false);
     useEffect(() => {
         if (user)
@@ -70,13 +109,19 @@ export const Profile = () => {
     };
 
     const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-         e.preventDefault();
+        e.preventDefault();
+
+        const newErrors = validate(data);
+        setErrors(newErrors);
+        const hasErrors = Object.values(newErrors).some(Boolean);
+        if (hasErrors) return;
+
         const payload = {
             firstName: data.firstName,
             lastName: data.lastName,
             phone: data.phone
         }
-       
+
         try {
             console.log(data)
             const res = await fetch("http://localhost:3000/users/me", {
@@ -142,6 +187,7 @@ export const Profile = () => {
 
                     <form
                         onSubmit={handleSubmit}
+                        noValidate
                         className="mt-8 flex flex-col gap-5 border-t border-slate-100 pt-8"
                     >
 
@@ -152,6 +198,7 @@ export const Profile = () => {
                                 type="text"
                                 label="First name"
                                 value={data.firstName}
+                                error={errors.firstName}
                                 onChange={handleChange}
                             />
                             <Field
@@ -160,6 +207,7 @@ export const Profile = () => {
                                 type="text"
                                 label="Last name"
                                 value={data.lastName}
+                                error={errors.lastName}
                                 onChange={handleChange}
                             />
                         </div>
@@ -180,6 +228,7 @@ export const Profile = () => {
                             type="tel"
                             label="Phone number"
                             value={data.phone}
+                            error={errors.phone}
                             onChange={handleChange}
 
                         />

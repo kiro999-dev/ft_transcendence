@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./auth/ProtectedRout";
 import { Dashboard } from "./home/Dashboard";
 import { Toaster } from "react-hot-toast";
 import { Profile } from "./home/componenets/Profile";
+import { ResetPassword } from "./auth/RestPassword";
 function App() {
 
 
@@ -19,6 +20,7 @@ function App() {
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -26,7 +28,6 @@ function App() {
           <Route path="/calendar" element={<Dashboard />} />
           <Route path="/properties" element={<Dashboard />} />
           <Route path="/me" element={<Profile />} />
-          
         </Route>
       </Routes>
 

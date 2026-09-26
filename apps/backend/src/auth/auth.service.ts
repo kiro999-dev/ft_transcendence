@@ -95,7 +95,7 @@ export class AuthService {
     const NewPassword_hash = await bcrypt.hash(chpassdata.NewPassword, 10);
     await this.userService.updateUserPassword(userId, NewPassword_hash);
   }
-  async forgetPassword(email: string) {
+  async forgotPassword(email: string) {
     const user = await this.userService.findUserbyEmail(email);
     if (user) {
       const expireDate = new Date();
@@ -103,7 +103,7 @@ export class AuthService {
       const restToken = nanoid(64);
       await this.userService.addRestToken(user.id, restToken, expireDate);
       const subject = 'Reset Link';
-      const link = `http://localhost/reset-password?token=${restToken}`;
+      const link = `http://localhost:5173/reset-password?token=${restToken}`;
       const html = `Hi ${user.first_name},
               We received a request to reset your password.
               <a href="${link}">Reset Password</a>

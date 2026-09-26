@@ -6,7 +6,7 @@ import { LoginDTO } from '../dtos/login.dto';
 import { refreshTokenDto } from '../dtos/refreshToken.dto';
 import { changePasswordDto } from '../dtos/changePassword.dto';
 import { AuthGuard } from '../guards/auth.guard';
-import { ForgetPasswordDto } from '../dtos/forgetpass.dto';
+import { forgotPasswordDto } from '../dtos/forgotpass.dto'
 import { ResetPasswdDto } from '../dtos/resetpassword.dto';
 import type { Response } from 'express';
 @Controller('auth')
@@ -53,11 +53,11 @@ export class AuthController {
     };
   }
 
-  @Post('forget-password')
-  async forgetPassword(@Body() emailDto: ForgetPasswordDto) {
+  @Post('forgot-password')
+  async forgotPassword(@Body() emailDto: forgotPasswordDto) {
     const { email } = emailDto;
 
-    return await this.auth.forgetPassword(email)
+    return await this.auth.forgotPassword(email)
   }
 
   @Post('reset-password')
