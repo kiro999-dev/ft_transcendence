@@ -2,6 +2,8 @@ import { useState } from "react";
 import { MdOutlineMarkEmailUnread } from "react-icons/md";
 import { Link } from "react-router-dom";
 
+import toast from "react-hot-toast";
+
 
 
 const BackToLogin = () => (
@@ -10,7 +12,7 @@ const BackToLogin = () => (
       to="/login"
       className="font-semibold text-blue-600 transition-colors hover:text-blue-700"
     >
-       Back to sign in
+      Back to sign in
     </Link>
   </p>
 );
@@ -18,10 +20,33 @@ const BackToLogin = () => (
 export const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
-
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: send `email` to your forgot-password API
+    const forgotPassword = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/auth/forgot-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(data.message || "Something went wrong :("
+          );
+          return;
+        }
+
+        toast.success(data.message);
+      } catch (error) {
+        toast.error("Something went wrong :(");
+      }
+    };
+
+    forgotPassword();
     setSubmitted(true);
   };
 
