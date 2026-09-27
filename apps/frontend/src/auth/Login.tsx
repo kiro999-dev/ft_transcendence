@@ -58,7 +58,7 @@ export const Login = () => {
     password: "",
   });
 
-  const [rememberMe, setRememberMe] = useState(false);
+ 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({
@@ -134,20 +134,7 @@ export const Login = () => {
           />
 
           <div className="flex items-center justify-between">
-            <label
-              htmlFor="remember"
-              className="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
-            >
-              <input
-                id="remember"
-                name="remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-blue-600"
-              />
-              Remember me
-            </label>
+         
 
             <Link
               to="/forgot-password"

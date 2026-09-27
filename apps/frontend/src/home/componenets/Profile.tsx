@@ -21,6 +21,7 @@ interface FieldProps {
     label: string;
     disabled?: boolean;
     error?: string;
+
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -47,7 +48,7 @@ const validate = (data: ProfileData): Errors => {
     return errors;
 };
 
-const Field = ({ name, type, value, label, onChange, disabled, error }: FieldProps) => (
+const Field = ({ name, type, value, label, onChange, disabled, error}: FieldProps) => (
     <div>
         <label
             htmlFor={name}
@@ -65,7 +66,7 @@ const Field = ({ name, type, value, label, onChange, disabled, error }: FieldPro
             onChange={onChange}
             aria-invalid={!!error}
             aria-describedby={error ? `${name}-error` : undefined}
-            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 disabled:text-gray-400 transition-colors focus:outline-none focus:ring-2 ${error
+            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900  disabled:bg-gray-100 disabled:cursor-not-allowed  transition-colors focus:outline-none focus:ring-2 ${error
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                     : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
                 }`}
@@ -220,6 +221,7 @@ export const Profile = () => {
                             value={data.email}
                             onChange={handleChange}
                             disabled={true}
+                
 
                         />
 
