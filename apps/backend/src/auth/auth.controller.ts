@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req, Put, Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Put, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { Body } from '@nestjs/common';
 import { SignUpDto } from '../dtos/signup.dto';
 import { AuthService } from './auth.service';
@@ -22,7 +22,7 @@ export class AuthController {
     const { accessToken, refreshToken } = await this.auth.login(LogInData);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, //should be true in prod
+      secure: false, //should be true in prod (https)
       sameSite: 'strict',
       path: '/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -30,12 +30,13 @@ export class AuthController {
     return {accessToken,}
   }
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   async refreshToken(@Req() req: any, @Res({ passthrough: true }) res: Response) {
     const getRefreshToken = req.cookies.refreshToken;
     const { refreshToken, accessToken } = await this.auth.refreshToken(getRefreshToken);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, //should be true in prod
+      secure: false, //should be true in prod (https)
       sameSite: 'strict',
       path: '/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 * 1000,
