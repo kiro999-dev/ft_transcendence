@@ -1,0 +1,8 @@
+ add logout in frontend :done
+ add add change password to frontend
+ make the owner add users with role staff
+ creat admin panale
+{
+    view all orgs with theire users
+    creat update and delet org 
+}

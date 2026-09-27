@@ -6,9 +6,13 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { TokensModule } from './tokens/tokens.module';
+import { EmailModule } from './email/email/email.module';
+import { OrganizationService } from './organization/organization.service';
+import { OrganizationModule } from './organization/organization.module';
 @Module({
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, OrganizationService],
   imports: [
     AuthModule, 
     UsersModule, 
@@ -26,6 +30,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         secret: configService.get<string>('ACCESS_TOKEN_SECRET') 
       }),
     }),
+   
+    TokensModule,
+    EmailModule,
+    OrganizationModule
   ],
 })
 export class AppModule {}
