@@ -18,7 +18,7 @@ interface InputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const InputLogin = ({
+ const InputLogin = ({
   name,
   type,
   value,
@@ -133,16 +133,13 @@ export const Login = () => {
             onChange={handleChange}
           />
 
-          <div className="flex items-center justify-between">
-         
-
             <Link
               to="/forgot-password"
               className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
             >
               Forgot password?
             </Link>
-          </div>
+          
 
           <button
             type="submit"

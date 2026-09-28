@@ -135,7 +135,7 @@ interface InputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const InputField = ({
+export const InputField = ({
   name,
   type,
   value,

@@ -9,6 +9,7 @@ import { Dashboard } from "./home/Dashboard";
 import { Toaster } from "react-hot-toast";
 import { Profile } from "./home/componenets/Profile";
 import { ResetPassword } from "./auth/RestPassword";
+import { ChangePassword } from "./auth/ChangePassword";
 function App() {
 
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="/calendar" element={<Dashboard />} />
           <Route path="/properties" element={<Dashboard />} />
           <Route path="/me" element={<Profile />} />
+          <Route path="/change-password" element={<ChangePassword />} />
         </Route>
       </Routes>
 
