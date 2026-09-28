@@ -3,6 +3,7 @@ import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { useAuth } from "../../auth/AuthContext";
 import { Loading } from "../../auth/ProtectedRout";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 interface ProfileData {
     firstName: string;
@@ -21,7 +22,6 @@ interface FieldProps {
     label: string;
     disabled?: boolean;
     error?: string;
-
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -48,7 +48,7 @@ const validate = (data: ProfileData): Errors => {
     return errors;
 };
 
-const Field = ({ name, type, value, label, onChange, disabled, error}: FieldProps) => (
+const Field = ({ name, type, value, label, onChange, disabled, error }: FieldProps) => (
     <div>
         <label
             htmlFor={name}
@@ -66,9 +66,9 @@ const Field = ({ name, type, value, label, onChange, disabled, error}: FieldProp
             onChange={onChange}
             aria-invalid={!!error}
             aria-describedby={error ? `${name}-error` : undefined}
-            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900  disabled:bg-gray-100 disabled:cursor-not-allowed  transition-colors focus:outline-none focus:ring-2 ${error
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                    : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
+            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 disabled:text-gray-400 transition-colors focus:outline-none focus:ring-2 ${error
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
                 }`}
         />
 
@@ -109,7 +109,7 @@ export const Profile = () => {
         setSaved(false);
     };
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const newErrors = validate(data);
@@ -221,7 +221,6 @@ export const Profile = () => {
                             value={data.email}
                             onChange={handleChange}
                             disabled={true}
-                
 
                         />
 
@@ -248,6 +247,15 @@ export const Profile = () => {
                             )}
                         </div>
                     </form>
+
+                    <div className="mt-6 border-t border-slate-100 pt-6 text-center">
+                        <Link
+                            to="/change-password"
+                            className="text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700"
+                        >
+                            Change password
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>
