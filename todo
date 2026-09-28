@@ -1,8 +1,9 @@
  add logout in frontend :done
  add add change password to frontend:done
- make the owner add users with role staff
- creat admin panale
-{
-    view all orgs with theire users
-    creat update and delet org 
-}
+
+Minor: Implement remote authentication with OAuth 2.0 (Google, GitHub, 42,
+etc.).
+ Major: Advanced permissions system:
+ ◦ View, edit, and delete users (CRUD).
+◦ Roles management (admin, user, guest, moderator, etc.).
+◦ Different views and actions based on user role.0
