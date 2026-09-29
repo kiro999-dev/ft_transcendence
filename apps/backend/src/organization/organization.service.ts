@@ -18,7 +18,7 @@ export class OrganizationService {
 
 
 
-        const user = await this.prisma.users.findUnique({
+        const user = await this.prisma.users.findFirst({
             where:
             {
                 email,

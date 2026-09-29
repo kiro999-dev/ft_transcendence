@@ -27,10 +27,10 @@ export class OrganizationController {
 
     @UseGuards(AuthGuard)
     @Post('/delete-user')
-    async removeUserOrganization(@Body() email:string,@Req() req: any)
+    async removeUserOrganization(@Body() email:any,@Req() req: any)
     {
         const orgId = req.user.organizationId
-        return this.orgService.removeUserOrganization(orgId,email);
+        return this.orgService.removeUserOrganization(orgId,email.email); // should have a dto
     }
     @UseGuards(AuthGuard)
     @Get("/users")
