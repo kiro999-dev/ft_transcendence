@@ -24,4 +24,19 @@ export class OrganizationController {
         const orgId = req.user.organizationId
         return this.orgService.addUserToOrganization(StaffUser,orgId);
     }
+
+    @UseGuards(AuthGuard)
+    @Post('/delete-user')
+    async removeUserOrganization(@Body() email:string,@Req() req: any)
+    {
+        const orgId = req.user.organizationId
+        return this.orgService.removeUserOrganization(orgId,email);
+    }
+    @UseGuards(AuthGuard)
+    @Get("/users")
+    async getOrganizationUsers(@Req() req: any)
+    {
+         const orgId = req.user.organizationId
+         return this.orgService.getOrganizationUsers(orgId)
+    }
 }
