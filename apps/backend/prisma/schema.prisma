@@ -18,7 +18,7 @@ model organizations {
   calendar_events   calendar_events[]
   leads             leads[]
   properties        properties[]
-  users             users?
+  users             users[]
   visitors          visitors[]
   whatsapp_sessions whatsapp_sessions?
 }
@@ -153,7 +153,7 @@ model property_images {
 
 model users {
   id                     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id        String?           @unique @db.Uuid
+  organization_id        String?           @db.Uuid
   first_name             String            @db.VarChar(255)
   last_name              String            @db.VarChar(255)
   email                  String            @unique @db.VarChar(255)

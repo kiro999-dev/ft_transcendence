@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Body } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post } from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';
 import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
@@ -18,9 +18,10 @@ export class OrganizationController {
         }
     }
     @UseGuards(AuthGuard)
+    @Post('/add-user')
     async addUserToOrganization(@Body() StaffUser:StaffUserDto,@Req() req: any)
     {
         const orgId = req.user.organizationId
-        this.orgService.addUserToOrganization(StaffUser,orgId);
+        return this.orgService.addUserToOrganization(StaffUser,orgId);
     }
 }
