@@ -4,6 +4,7 @@ import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { ROLES } from '../decorator/roles.decorator';
+import { UseremailDto } from '../dtos/userEmail.dto';
 @Controller('organization')
 export class OrganizationController {
     constructor(private orgService: OrganizationService) { }
@@ -29,10 +30,10 @@ export class OrganizationController {
     @ROLES('owner')
     @UseGuards(AuthenticationGuard,AuthorizationGuard)
     @Post('/delete-user')
-    async removeUserOrganization(@Body() email:any,@Req() req: any)
+    async removeUserOrganization(@Body() Useremail:UseremailDto,@Req() req: any)
     {
         const orgId = req.user.organizationId
-        return this.orgService.removeUserOrganization(orgId,email.email); // should have a dto
+        return this.orgService.removeUserOrganization(orgId,Useremail.email); 
     }
     @UseGuards(AuthenticationGuard)
     @Get("/users")

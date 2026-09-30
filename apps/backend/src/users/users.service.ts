@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { SignUpDto } from '../dtos/signup.dto';
 import { UpdateProfileDto } from '../dtos/updateProfile.dto';
 
-export type Role = 'admin' | 'staff' | 'owner';
+
 @Injectable()
 export class UsersService {
 

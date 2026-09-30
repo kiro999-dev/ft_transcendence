@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import * as bcrypt from 'bcrypt';
-import { Role } from '../users/users.service';
+import { Role } from '../decorator/roles.decorator';
 @Injectable()
 export class OrganizationService {
 
