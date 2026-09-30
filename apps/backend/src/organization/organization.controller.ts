@@ -33,7 +33,7 @@ export class OrganizationController {
         }
     }
     @ROLES('owner')
-    @UseGuards(AuthenticationGuard)
+    @UseGuards(AuthenticationGuard,AuthorizationGuard)
     @Post('/users')
     async addUserToOrganization(@Body() StaffUser: StaffUserDto, @Req() req: any) {
         const orgId = req.user.organizationId
