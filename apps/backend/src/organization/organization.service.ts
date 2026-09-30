@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '../users/users.service';
 @Injectable()
 export class OrganizationService {
+
     constructor(private prisma: PrismaService) { }
     async getOrganizationById(id: string) {
         return await this.prisma.organizations.findFirst({
@@ -15,16 +16,11 @@ export class OrganizationService {
     }
 
     async removeUserOrganization(orgId: string, email: string) {
-
-
-
         const user = await this.prisma.users.findFirst({
-            where:
-            {
+            where:{
                 email,
-                organization_id: orgId
+                organization_id :orgId
             }
-
         })
         if (!user)
             throw new NotFoundException("User not found in your organization")

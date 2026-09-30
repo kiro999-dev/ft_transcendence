@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '../guards/auth.guard';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 import { UsersService } from './users.service';
 import { NotFoundException } from '@nestjs/common';
 import { UpdateProfileDto } from '../dtos/updateProfile.dto';
 @Controller('users')
 export class UsersController {
     constructor(private userService: UsersService) { }
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthenticationGuard)
     @Get("me")
     async getProfile(@Req()req:any) {
         const userId = req.user.sub
@@ -25,7 +25,7 @@ export class UsersController {
             organization_id: user.organization_id,
         };
     }
-     @UseGuards(AuthGuard)
+     @UseGuards(AuthenticationGuard)
      @Patch('me')
      async updateProfile(@Body() newProfileData:UpdateProfileDto,@Req() req:any)
      {

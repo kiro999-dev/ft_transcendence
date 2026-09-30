@@ -7,22 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model organizations {
-  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name              String             @db.VarChar(255)
-  status            String             @default("active") @db.VarChar(20)
-  created_at        DateTime           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime           @default(now()) @db.Timestamp(6)
-  ai_settings       ai_settings?
-  bookings          bookings[]
-  calendar_events   calendar_events[]
-  leads             leads[]
-  properties        properties[]
-  users             users[]
-  visitors          visitors[]
-  whatsapp_sessions whatsapp_sessions?
-}
-
 model ai_settings {
   id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id         String        @unique @db.Uuid
@@ -103,6 +87,22 @@ model messages {
   content         String
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model organizations {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String             @db.VarChar(255)
+  status            String             @default("active") @db.VarChar(20)
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime           @default(now()) @db.Timestamp(6)
+  ai_settings       ai_settings?
+  bookings          bookings[]
+  calendar_events   calendar_events[]
+  leads             leads[]
+  properties        properties[]
+  users             users[]
+  visitors          visitors[]
+  whatsapp_sessions whatsapp_sessions?
 }
 
 model properties {

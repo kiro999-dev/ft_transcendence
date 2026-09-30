@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AuthGuard } from './guards/auth.guard';
+import { AuthenticationGuard } from './guards/authentication.guard';
 interface AuthenticatedRequest extends Request {
   user: {
     sub: string;
@@ -16,7 +16,7 @@ export class AppController {
 
   
   @Get()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthenticationGuard)
   getHello(@Req() req:AuthenticatedRequest ): any {
    
     return `you login mr ${req.user.sub}`
