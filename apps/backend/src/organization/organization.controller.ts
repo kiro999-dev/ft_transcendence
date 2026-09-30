@@ -4,7 +4,7 @@ import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { ROLES } from '../decorator/roles.decorator';
-import { UseremailDto } from '../dtos/userEmail.dto';
+
 @Controller('organization')
 export class OrganizationController {
     constructor(private orgService: OrganizationService) { }

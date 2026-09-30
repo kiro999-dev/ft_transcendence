@@ -29,10 +29,10 @@ export class OrganizationService {
     {
         return this.prisma.organizations.findMany()
     }
-    async removeUserOrganization(orgId: string, email: string) {
+    async removeUserOrganization(orgId: string, id: string) {
         const user = await this.prisma.users.findFirst({
             where:{
-                email,
+                id,
                 organization_id :orgId
             }
         })
@@ -46,11 +46,11 @@ export class OrganizationService {
         await this.prisma.users.delete(
             {
                 where: {
-                    email
+                    id
                 }
             })
         return {
-            message: "User  has been Deleted"
+            message: "User has been Deleted"
         }
     }
     async addUserToOrganization(StaffUser: StaffUserDto, orgId: string) {

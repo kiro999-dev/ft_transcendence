@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "organizations" (
 CREATE TABLE IF NOT EXISTS "users" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "first_name" varchar(255) NOT NULL,
     "last_name" varchar(255) NOT NULL,
     "email" varchar(255) UNIQUE NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 CREATE TABLE IF NOT EXISTS "properties" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "title" varchar(255) NOT NULL,
     "description" text,
     "property_type" varchar(50) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS "properties" (
 CREATE TABLE IF NOT EXISTS "property_images" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "property_id" uuid NOT NULL
-        REFERENCES "properties" ("id"),
+        REFERENCES "properties" ("id") ON DELETE CASCADE,
     "image_url" text NOT NULL,
     "display_order" integer NOT NULL DEFAULT 0,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS "property_images" (
 CREATE TABLE IF NOT EXISTS "visitors" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "name" varchar(255),
     "email" varchar(255),
     "phone" varchar(50),
@@ -69,9 +69,9 @@ CREATE TABLE IF NOT EXISTS "visitors" (
 CREATE TABLE IF NOT EXISTS "conversations" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "visitor_id" uuid NOT NULL
-        REFERENCES "visitors" ("id"),
+        REFERENCES "visitors" ("id") ON DELETE CASCADE,
     "property_id" uuid
-        REFERENCES "properties" ("id"),
+        REFERENCES "properties" ("id") ON DELETE SET NULL,
     "started_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "last_message_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS "conversations" (
 CREATE TABLE IF NOT EXISTS "messages" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "conversation_id" uuid NOT NULL
-        REFERENCES "conversations" ("id"),
+        REFERENCES "conversations" ("id") ON DELETE CASCADE,
     "sender_type" varchar(20) NOT NULL,
     "content" text NOT NULL,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -88,11 +88,11 @@ CREATE TABLE IF NOT EXISTS "messages" (
 CREATE TABLE IF NOT EXISTS "leads" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "visitor_id" uuid NOT NULL
-        REFERENCES "visitors" ("id"),
+        REFERENCES "visitors" ("id") ON DELETE CASCADE,
     "property_id" uuid
-        REFERENCES "properties" ("id"),
+        REFERENCES "properties" ("id") ON DELETE SET NULL,
     "status" varchar(50) NOT NULL DEFAULT 'new',
     "score" integer,
     "budget" decimal(14,2),
@@ -104,13 +104,13 @@ CREATE TABLE IF NOT EXISTS "leads" (
 CREATE TABLE IF NOT EXISTS "bookings" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "lead_id" uuid
-        REFERENCES "leads" ("id"),
+        REFERENCES "leads" ("id") ON DELETE SET NULL,
     "property_id" uuid NOT NULL
-        REFERENCES "properties" ("id"),
+        REFERENCES "properties" ("id") ON DELETE CASCADE,
     "visitor_id" uuid NOT NULL
-        REFERENCES "visitors" ("id"),
+        REFERENCES "visitors" ("id") ON DELETE CASCADE,
     "visit_date" timestamp NOT NULL,
     "status" varchar(50) NOT NULL DEFAULT 'pending',
     "notes" text,
@@ -121,11 +121,11 @@ CREATE TABLE IF NOT EXISTS "bookings" (
 CREATE TABLE IF NOT EXISTS "calendar_events" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "user_id" uuid NOT NULL
-        REFERENCES "users" ("id"),
+        REFERENCES "users" ("id") ON DELETE CASCADE,
     "booking_id" uuid
-        REFERENCES "bookings" ("id"),
+        REFERENCES "bookings" ("id") ON DELETE SET NULL,
     "title" varchar(255) NOT NULL,
     "description" text,
     "start_time" timestamp NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS "calendar_events" (
 CREATE TABLE IF NOT EXISTS "ai_settings" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid UNIQUE NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "welcome_message" text,
     "qualification_questions" json,
     "booking_enabled" boolean NOT NULL DEFAULT true,
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS "ai_settings" (
 CREATE TABLE IF NOT EXISTS "whatsapp_sessions" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "organization_id" uuid UNIQUE NOT NULL
-        REFERENCES "organizations" ("id"),
+        REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "session_name" varchar(255) UNIQUE NOT NULL,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS "whatsapp_sessions" (
 CREATE TABLE IF NOT EXISTS "property_documents" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     "property_id" uuid NOT NULL
-        REFERENCES "properties" ("id"),
+        REFERENCES "properties" ("id") ON DELETE CASCADE,
     "content" text NOT NULL,
     "chunk_index" integer NOT NULL DEFAULT 0,
     "metadata" json,

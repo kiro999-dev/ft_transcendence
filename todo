@@ -2,12 +2,5 @@
 
 Minor: Implement remote authentication with OAuth 2.0 (Google, GitHub, 42,
 etc.).
- Major: Advanced permissions system:
- ◦ View, edit, and delete users (CRUD).
-◦ Roles management (admin, user, guest, moderator, etc.).
-◦ Different views and actions based on user role
-Major: An organization system:
-◦ Create, edit, and delete organizations.
-◦ Add users to organizations.
-◦ Remove users from organizations.
-◦ View organizations and allow users to perform specific actions within an organization (minimum: create, read, update).
+Edit organization: PATCH /organization/us (owner changes the name).
+Roles management: PATCH /organization/users/:id/role, plus extending the Role type with guest, moderator, etc.
