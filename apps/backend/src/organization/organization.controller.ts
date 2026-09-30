@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post, Delete } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post, Delete, Param, ParseUUIDPipe } from '@nestjs/common';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
@@ -8,22 +8,18 @@ import { UseremailDto } from '../dtos/userEmail.dto';
 @Controller('organization')
 export class OrganizationController {
     constructor(private orgService: OrganizationService) { }
-    @UseGuards(AuthenticationGuard,AuthorizationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
     @Get('all')
     @ROLES('admin')
-    async getAllOrganizations()
-    {
+    async getAllOrganizations() {
         return this.orgService.getAllOrganizations()
     }
     @ROLES('admin')
-    @UseGuards(AuthenticationGuard,AuthorizationGuard)
-    @Delete('delete-organization')
-    async deleteOrganization(@Body() OrgId:any)
-    {
-        this.orgService.deleteOrganization(OrgId.id)
-        return {
-            message:"Organization  has been deleted"
-        }
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Delete(':id')
+    async deleteOrganization(@Param('id', ParseUUIDPipe) id: string) {
+        await this.orgService.deleteOrganization(id)
+        return { message: 'Organization has been deleted' }
     }
     @UseGuards(AuthenticationGuard)
     @Get('us')
@@ -36,27 +32,24 @@ export class OrganizationController {
             organization_name: org.name
         }
     }
+    @ROLES('owner')
     @UseGuards(AuthenticationGuard)
-    @Post('/add-user')
-    async addUserToOrganization(@Body() StaffUser:StaffUserDto,@Req() req: any)
-    {
+    @Post('/users')
+    async addUserToOrganization(@Body() StaffUser: StaffUserDto, @Req() req: any) {
         const orgId = req.user.organizationId
-        return this.orgService.addUserToOrganization(StaffUser,orgId);
+        return this.orgService.addUserToOrganization(StaffUser, orgId);
     }
 
     @ROLES('owner')
-    @UseGuards(AuthenticationGuard,AuthorizationGuard)
-    @Post('/delete-user')
-    async removeUserOrganization(@Body() Useremail:UseremailDto,@Req() req: any)
-    {
-        const orgId = req.user.organizationId
-        return this.orgService.removeUserOrganization(orgId,Useremail.email); 
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Delete('users/:id')
+    removeUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+        return this.orgService.removeUserOrganization(req.user.organizationId, id)
     }
     @UseGuards(AuthenticationGuard)
     @Get("/users")
-    async getOrganizationUsers(@Req() req: any)
-    {
-         const orgId = req.user.organizationId
-         return this.orgService.getOrganizationUsers(orgId)
+    async getOrganizationUsers(@Req() req: any) {
+        const orgId = req.user.organizationId
+        return this.orgService.getOrganizationUsers(orgId)
     }
 }
