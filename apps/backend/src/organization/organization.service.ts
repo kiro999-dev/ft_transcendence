@@ -8,13 +8,27 @@ export class OrganizationService {
 
     constructor(private prisma: PrismaService) { }
     async getOrganizationById(id: string) {
-        return await this.prisma.organizations.findFirst({
+        return this.prisma.organizations.findFirst({
             where: {
                 id
             }
         })
     }
-
+    async deleteOrganization(id:string)
+    {
+        const org = await this.getOrganizationById(id)
+        if(!org)
+            throw new NotFoundException("Organization Not Found")
+        await this.prisma.organizations.delete({
+            where:{
+                id
+            }
+        })
+    }
+    async getAllOrganizations()
+    {
+        return this.prisma.organizations.findMany()
+    }
     async removeUserOrganization(orgId: string, email: string) {
         const user = await this.prisma.users.findFirst({
             where:{
@@ -67,7 +81,7 @@ export class OrganizationService {
         }
     }
     async getOrganizationUsers(orgId: string) {
-        return await this.prisma.users.findMany({
+        return this.prisma.users.findMany({
             where: {
                 organization_id: orgId
             },

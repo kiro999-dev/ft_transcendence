@@ -15,7 +15,7 @@ model ai_settings {
   booking_enabled         Boolean       @default(true)
   created_at              DateTime      @default(now()) @db.Timestamp(6)
   updated_at              DateTime      @default(now()) @db.Timestamp(6)
-  organizations           organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations           organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model bookings {
@@ -29,10 +29,10 @@ model bookings {
   notes           String?
   created_at      DateTime          @default(now()) @db.Timestamp(6)
   updated_at      DateTime          @default(now()) @db.Timestamp(6)
-  leads           leads?            @relation(fields: [lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organizations   organizations     @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  properties      properties        @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  visitors        visitors          @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  leads           leads?            @relation(fields: [lead_id], references: [id], onUpdate: NoAction)
+  organizations   organizations     @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  properties      properties        @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  visitors        visitors          @relation(fields: [visitor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   calendar_events calendar_events[]
 }
 
@@ -47,9 +47,9 @@ model calendar_events {
   end_time        DateTime      @db.Timestamp(6)
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   updated_at      DateTime      @default(now()) @db.Timestamp(6)
-  bookings        bookings?     @relation(fields: [booking_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bookings        bookings?     @relation(fields: [booking_id], references: [id], onUpdate: NoAction)
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model conversations {
@@ -58,8 +58,8 @@ model conversations {
   property_id     String?     @db.Uuid
   started_at      DateTime    @default(now()) @db.Timestamp(6)
   last_message_at DateTime    @default(now()) @db.Timestamp(6)
-  properties      properties? @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  visitors        visitors    @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  properties      properties? @relation(fields: [property_id], references: [id], onUpdate: NoAction)
+  visitors        visitors    @relation(fields: [visitor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   messages        messages[]
 }
 
@@ -75,9 +75,9 @@ model leads {
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   updated_at      DateTime      @default(now()) @db.Timestamp(6)
   bookings        bookings[]
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  properties      properties?   @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  visitors        visitors      @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  properties      properties?   @relation(fields: [property_id], references: [id], onUpdate: NoAction)
+  visitors        visitors      @relation(fields: [visitor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model messages {
@@ -86,7 +86,7 @@ model messages {
   sender_type     String        @db.VarChar(20)
   content         String
   created_at      DateTime      @default(now()) @db.Timestamp(6)
-  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model organizations {
@@ -126,7 +126,7 @@ model properties {
   bookings           bookings[]
   conversations      conversations[]
   leads              leads[]
-  organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   property_documents property_documents[]
   property_images    property_images[]
 }
@@ -139,7 +139,7 @@ model property_documents {
   metadata    Json?      @db.Json
   created_at  DateTime   @default(now()) @db.Timestamp(6)
   updated_at  DateTime   @default(now()) @db.Timestamp(6)
-  properties  properties @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model property_images {
@@ -148,7 +148,7 @@ model property_images {
   image_url     String
   display_order Int        @default(0)
   created_at    DateTime   @default(now()) @db.Timestamp(6)
-  properties    properties @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model users {
@@ -166,7 +166,7 @@ model users {
   reset_token            String?
   reset_token_expires_at DateTime?         @db.Timestamptz(6)
   calendar_events        calendar_events[]
-  organizations          organizations?    @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations          organizations?    @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model visitors {
@@ -180,7 +180,7 @@ model visitors {
   bookings        bookings[]
   conversations   conversations[]
   leads           leads[]
-  organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model whatsapp_sessions {
@@ -189,5 +189,5 @@ model whatsapp_sessions {
   session_name    String        @unique @db.VarChar(255)
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   updated_at      DateTime      @default(now()) @db.Timestamp(6)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

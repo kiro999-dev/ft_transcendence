@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post, Delete } from '@nestjs/common';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
@@ -8,8 +8,25 @@ import { UseremailDto } from '../dtos/userEmail.dto';
 @Controller('organization')
 export class OrganizationController {
     constructor(private orgService: OrganizationService) { }
+    @UseGuards(AuthenticationGuard,AuthorizationGuard)
+    @Get('all')
+    @ROLES('admin')
+    async getAllOrganizations()
+    {
+        return this.orgService.getAllOrganizations()
+    }
+    @ROLES('admin')
+    @UseGuards(AuthenticationGuard,AuthorizationGuard)
+    @Delete('delete-organization')
+    async deleteOrganization(@Body() OrgId:any)
+    {
+        this.orgService.deleteOrganization(OrgId.id)
+        return {
+            message:"Organization  has been deleted"
+        }
+    }
     @UseGuards(AuthenticationGuard)
-    @Get('')
+    @Get('us')
     async getOrganization(@Req() req: any) {
         const orgId = req.user.organizationId
         const org = await this.orgService.getOrganizationById(orgId);

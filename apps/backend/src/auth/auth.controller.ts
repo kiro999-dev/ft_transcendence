@@ -58,20 +58,20 @@ export class AuthController {
   async forgotPassword(@Body() emailDto: forgotPasswordDto) {
     const { email } = emailDto;
 
-    return await this.auth.forgotPassword(email)
+    return this.auth.forgotPassword(email)
   }
 
   @Post('reset-password')
   async resetPassword(@Body() ResetPasswdDataDto: ResetPasswdDto) {
     const { NewPassword, reset_token } = ResetPasswdDataDto;
 
-    return await this.auth.resetPassword(NewPassword, reset_token);
+    return this.auth.resetPassword(NewPassword, reset_token);
   }
 
   @Post('logout')
   @UseGuards(AuthenticationGuard)
   async logout(@Req() req: any) {
     const userid = req.user.sub
-    return await this.auth.logout(userid);
+    return this.auth.logout(userid);
   }
 }

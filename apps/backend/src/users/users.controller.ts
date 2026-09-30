@@ -29,7 +29,7 @@ export class UsersController {
      @Patch('me')
      async updateProfile(@Body() newProfileData:UpdateProfileDto,@Req() req:any)
      {
-        return await this.userService.updateUserProfile(newProfileData,req.user.sub)
+        return this.userService.updateUserProfile(newProfileData,req.user.sub)
      }
 
 }

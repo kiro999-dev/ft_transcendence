@@ -1,19 +1,30 @@
-import { CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { Observable } from "rxjs";
-import { ROLES_KEY } from "../decorator/roles.decorator";
-import { Role } from "../decorator/roles.decorator";  
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { ROLES_KEY, Role } from '../decorator/roles.decorator'
 
+@Injectable()
+export class AuthorizationGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
 
-export class AuthorizationGuard implements CanActivate{
-    constructor (private reflactor:Reflector){}
-    canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean>
-    {
-        const request = context.switchToHttp().getRequest()
-        const requiredRole:Role = this.reflactor.getAllAndOverride(ROLES_KEY,[context.getClass,context.getHandler])
-        const userRole:Role = request.user.role;
-        if(requiredRole !== userRole)
-            throw new ForbiddenException("you are not allowd");
-        return true
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest()
+
+    const requiredRole = this.reflector.getAllAndOverride<Role>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ])
+
+    if (!requiredRole) return true
+
+    const userRole = request.user?.role
+    if (requiredRole !== userRole) {
+      throw new ForbiddenException('You are not allowed')
     }
+    return true
+  }
 }
