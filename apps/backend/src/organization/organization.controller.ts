@@ -3,9 +3,11 @@ import { AuthenticationGuard } from '../guards/authentication.guard';
 import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import { AuthorizationGuard } from '../guards/authorization.guard';
-import { ROLES } from '../decorator/roles.decorator';
+import {ROLES } from '../decorator/roles.decorator';
+import type { Role } from '../decorator/roles.decorator';
 import { orgNameDto } from '../dtos/orgName.dto';
 import { request } from 'http';
+import { RoleDto } from '../dtos/role.dto';
 
 @Controller('organization')
 export class OrganizationController {
@@ -35,18 +37,18 @@ export class OrganizationController {
         }
     }
     @ROLES('owner')
-    @UseGuards(AuthenticationGuard,AuthorizationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Patch('/us')
+    async changeOrganizationName(@Body() orgName: orgNameDto, @Req() request: any) {
+        const orgID = request.user.organizationId
+        return this.orgService.changeOrganizationName(orgName.organizationName, orgID)
+    }
+    @ROLES('owner')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
     @Post('/users')
     async addUserToOrganization(@Body() StaffUser: StaffUserDto, @Req() req: any) {
         const orgId = req.user.organizationId
         return this.orgService.addUserToOrganization(StaffUser, orgId);
-    }
-
-    @ROLES('owner')
-    @UseGuards(AuthenticationGuard, AuthorizationGuard)
-    @Delete('users/:id')
-    removeUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
-        return this.orgService.removeUserOrganization(req.user.organizationId, id)
     }
     @UseGuards(AuthenticationGuard)
     @Get("/users")
@@ -56,11 +58,15 @@ export class OrganizationController {
     }
     @ROLES('owner')
     @UseGuards(AuthenticationGuard, AuthorizationGuard)
-    @Patch('/us')
-    async changeOrganizationName(@Body() orgName:orgNameDto,@Req() request:any)
-    {
-        const orgID = request.user.organizationId
-        this.orgService.changeOrganizationName(orgName.organizationName,orgID)
+    @Delete('users/:id')
+    removeUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+        return this.orgService.removeUserOrganization(req.user.organizationId, id)
     }
-
+    @ROLES('owner')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Patch('users/:id/role')
+    changeUserRole(@Param('id', ParseUUIDPipe) id: string, @Req() req: any,@Body() roleData:RoleDto) {
+        return this.orgService.changeUserRole(req.user.organizationId, id,roleData.role)
+    }
+    
 }

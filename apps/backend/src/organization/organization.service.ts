@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import * as bcrypt from 'bcrypt';
@@ -118,4 +118,16 @@ export class OrganizationService {
             message:"Organization Name Has Been Updated"
         }
     }
+   async changeUserRole(orgId: string, userId: string, role: Role) {
+    const user = await this.prisma.users.findFirst({
+        where: { id: userId, organization_id: orgId }
+    })
+    if (!user) throw new NotFoundException("User not found in your organization")
+    if (user.role === 'owner')
+        throw new ForbiddenException("Cannot change the owner's role")
+
+    await this.prisma.users.update({ where: { id: userId }, data: { role } })
+    return { message: "User role has been updated" }
+}
+    
 }
