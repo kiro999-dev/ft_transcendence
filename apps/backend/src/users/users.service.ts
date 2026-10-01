@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException,BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'
 import * as bcrypt from 'bcrypt';
 import { SignUpDto } from '../dtos/signup.dto';
@@ -23,7 +23,7 @@ export class UsersService {
         });
         return user
     }
-    async updateUserToken(userId: string, refreshTokenHased: string | null ) {
+    async updateUserToken(userId: string, refreshTokenHased: string | null) {
         await this.prisma.users.update({
             where: {
                 id: userId,
@@ -90,29 +90,54 @@ export class UsersService {
             }
         })
         let expireDate = null
-        if(user)
+        if (user)
             expireDate = user.reset_token_expires_at;
-        if(!expireDate || expireDate < new Date())
+        if (!expireDate || expireDate < new Date())
             return null
         return user
     }
-    async updateUserProfile(newProfileData:UpdateProfileDto,userId:string){
-        const user =  await this.prisma.users.update({
-            where:{
-                id:userId
-            },
-            data:{
-                first_name:newProfileData.firstName,
-                last_name:newProfileData.lastName,
-                phone:newProfileData.phone
+    async updateUserProfile(newProfileData: UpdateProfileDto, userId: string) {
+        const user = await this.prisma.users.findFirst({
+            where: {
+                id: userId
             }
         })
-        if(!user)
+        if (!user)
             throw new NotFoundException("User Not found")
-        console.log(newProfileData.phone)
+        await this.prisma.users.update({
+            where: {
+                id: userId
+            },
+            data: {
+                first_name: newProfileData.firstName,
+                last_name: newProfileData.lastName,
+                phone: newProfileData.phone
+            }
+        })
+
         return {
-            message:"updated successfully",
-            success:true
+            message: "updated successfully",
+            success: true
         }
+    }
+    async listAllUsers(page = 1, limit = 20) {
+        return this.prisma.users.findMany({
+            skip: (page - 1) * limit,
+            take: limit,
+            select: {
+                id: true, first_name: true, last_name: true,
+                email: true, phone: true, role: true, organization_id: true,
+            },
+        });
+    }
+    async deleteUser(targetId: string, requesterId: string) {
+        if (targetId === requesterId)
+            throw new BadRequestException('You cannot delete yourself');
+        const user = await this.prisma.users.findUnique({ where: { id: targetId } });
+        if (!user) throw new NotFoundException('User not found');
+        if (user.role === 'owner')
+            throw new BadRequestException('Delete the organization instead of its owner');
+        await this.prisma.users.delete({ where: { id: targetId } });
+        return { message: 'User has been deleted' };
     }
 }
