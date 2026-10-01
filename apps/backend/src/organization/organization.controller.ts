@@ -1,9 +1,11 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post, Delete, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post, Delete, Param, ParseUUIDPipe, Patch } from '@nestjs/common';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { ROLES } from '../decorator/roles.decorator';
+import { orgNameDto } from '../dtos/orgName.dto';
+import { request } from 'http';
 
 @Controller('organization')
 export class OrganizationController {
@@ -52,4 +54,13 @@ export class OrganizationController {
         const orgId = req.user.organizationId
         return this.orgService.getOrganizationUsers(orgId)
     }
+    @ROLES('owner')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Patch('/us')
+    async changeOrganizationName(@Body() orgName:orgNameDto,@Req() request:any)
+    {
+        const orgID = request.user.organizationId
+        this.orgService.changeOrganizationName(orgName.organizationName,orgID)
+    }
+
 }

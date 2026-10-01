@@ -96,4 +96,26 @@ export class OrganizationService {
 
         })
     }
+    async changeOrganizationName(organization_name:string,id:string)
+    {
+        const org = await this.prisma.organizations.findFirst({
+            where:{
+                id
+            }
+        })
+        if(!org)
+            throw new NotFoundException("Organization Not Found")
+        await this.prisma.organizations.update({
+            where:
+            {
+                id
+            },
+            data:{
+                name:organization_name
+            }
+        })
+        return {
+            message:"Organization Name Has Been Updated"
+        }
+    }
 }
