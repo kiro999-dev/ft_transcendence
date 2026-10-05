@@ -6,53 +6,60 @@ import {
   Matches,
   MaxLength,
   IsNotEmpty,
+  IsOptional,
+  IsIn,
 } from 'class-validator';
-export class StaffUserDto 
-{
-      @MaxLength(100)
-      @IsString()
-      @MinLength(2)
-      @IsNotEmpty()
-      @Matches(/^\S+$/, {
-        message: 'First name must not contain spaces',
-      })
-      firstName: string;
-    
-      @MaxLength(100)
-      @IsString()
-      @MinLength(2)
-      @IsNotEmpty()
-      @Matches(/^\S+$/, {
-        message: 'Last name must not contain spaces',
-      })
-      lastName: string;
-    
-    
-      @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/, {
-        message: 'must be a valid email',
-      })
-      @MaxLength(255)
-      @IsEmail()
-      email: string;
-    
-      @IsString()
-      @MinLength(8)
-      @MaxLength(128)
-      @Matches(/[A-Z]/, {
-        message: 'Password must contain at least one uppercase letter',
-      })
-      @Matches(/[a-z]/, {
-        message: 'Password must contain at least one lowercase letter',
-      })
-      @Matches(/[0-9]/, {
-        message: 'Password must contain at least one number',
-      })
-      password: string;
-    
-    
-      @Matches(/^\+?[1-9]\d{7,14}$/, {
-        message: 'Phone number must contain only digits, optionally starting with +',
-      })
-      @IsPhoneNumber()
-      phone: string;
+import { ASSIGNABLE_ROLES } from '../decorator/roles.decorator';
+import type {AssignableRole} from'../decorator/roles.decorator'
+export class StaffUserDto {
+  @MaxLength(100)
+  @IsString()
+  @MinLength(2)
+  @IsNotEmpty()
+  @Matches(/^\S+$/, {
+    message: 'First name must not contain spaces',
+  })
+  firstName: string;
+
+  @MaxLength(100)
+  @IsString()
+  @MinLength(2)
+  @IsNotEmpty()
+  @Matches(/^\S+$/, {
+    message: 'Last name must not contain spaces',
+  })
+  lastName: string;
+
+
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]@[a-zA-Z]+\.[a-z]{1,3}$/, {
+    message: 'must be a valid email',
+  })
+  @MaxLength(255)
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  @Matches(/[A-Z]/, {
+    message: 'Password must contain at least one uppercase letter',
+  })
+  @Matches(/[a-z]/, {
+    message: 'Password must contain at least one lowercase letter',
+  })
+  @Matches(/[0-9]/, {
+    message: 'Password must contain at least one number',
+  })
+  password: string;
+
+
+  @Matches(/^\+?[1-9]\d{7,14}$/, {
+    message: 'Phone number must contain only digits, optionally starting with +',
+  })
+  @IsPhoneNumber()
+  phone: string;
+
+  @IsOptional()
+  @IsIn(ASSIGNABLE_ROLES)
+  role?: AssignableRole;
 }

@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { PrismaService } from '../prisma/prisma.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import * as bcrypt from 'bcrypt';
-import { Role } from '../decorator/roles.decorator';
+import { AssignableRole, Role } from '../decorator/roles.decorator';
 @Injectable()
 export class OrganizationService {
 
@@ -14,26 +14,24 @@ export class OrganizationService {
             }
         })
     }
-    async deleteOrganization(id:string)
-    {
+    async deleteOrganization(id: string) {
         const org = await this.getOrganizationById(id)
-        if(!org)
+        if (!org)
             throw new NotFoundException("Organization Not Found")
         await this.prisma.organizations.delete({
-            where:{
+            where: {
                 id
             }
         })
     }
-    async getAllOrganizations()
-    {
+    async getAllOrganizations() {
         return this.prisma.organizations.findMany()
     }
     async removeUserOrganization(orgId: string, id: string) {
         const user = await this.prisma.users.findFirst({
-            where:{
+            where: {
                 id,
-                organization_id :orgId
+                organization_id: orgId
             }
         })
         if (!user)
@@ -56,6 +54,7 @@ export class OrganizationService {
     async addUserToOrganization(StaffUser: StaffUserDto, orgId: string) {
 
         const { firstName, lastName, email, phone, password } = StaffUser;
+        const role: AssignableRole = StaffUser.role ?? 'staff';
         const user = await this.prisma.users.findFirst({
             where: {
                 email
@@ -63,7 +62,7 @@ export class OrganizationService {
         })
         if (user)
             throw new BadRequestException("email already in use");
-        const role: Role = "staff";
+        
         const hashedPassword = await bcrypt.hash(password, 10);
         await this.prisma.users.create({
             data: {
@@ -96,38 +95,43 @@ export class OrganizationService {
 
         })
     }
-    async changeOrganizationName(organization_name:string,id:string)
-    {
+    async changeOrganizationName(organization_name: string, id: string) {
         const org = await this.prisma.organizations.findFirst({
-            where:{
+            where: {
                 id
             }
         })
-        if(!org)
+        if (!org)
             throw new NotFoundException("Organization Not Found")
         await this.prisma.organizations.update({
             where:
             {
                 id
             },
-            data:{
-                name:organization_name
+            data: {
+                name: organization_name
             }
         })
         return {
-            message:"Organization Name Has Been Updated"
+            message: "Organization Name Has Been Updated"
         }
     }
-   async changeUserRole(orgId: string, userId: string, role: Role) {
-    const user = await this.prisma.users.findFirst({
-        where: { id: userId, organization_id: orgId }
-    })
-    if (!user) throw new NotFoundException("User not found in your organization")
-    if (user.role === 'owner')
-        throw new ForbiddenException("Cannot change the owner's role")
+    async changeUserRole(orgId: string, userId: string, role: AssignableRole) {
+        const user = await this.prisma.users.findFirst({
+            where: { id: userId, organization_id: orgId },
+        });
+        if (!user) throw new NotFoundException('User not found in your organization');
+        if (user.role === 'owner')
+            throw new ForbiddenException("Cannot change the owner's role");
+        if (user.role === role)
+            throw new BadRequestException(`User already has the role "${role}"`);
 
-    await this.prisma.users.update({ where: { id: userId }, data: { role } })
-    return { message: "User role has been updated" }
+        await this.prisma.users.update({
+            where: { id: userId },
+            data: { role, token_hash: null },
+        });
+        return { message: 'User role has been updated', userId, role };
+    }
 }
     
-}
+

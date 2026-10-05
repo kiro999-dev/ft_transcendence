@@ -1,9 +1,8 @@
-import { IsNotEmpty ,IsIn} from "class-validator";
-import type {Role} from "../decorator/roles.decorator";
+import { IsIn } from 'class-validator';
+import { ASSIGNABLE_ROLES } from '../decorator/roles.decorator';
+import type { AssignableRole } from '../decorator/roles.decorator';
 
-export class RoleDto
-{
-    @IsNotEmpty()
-    @IsIn(['staff', 'owner'])
-    role:Role
+export class RoleDto {
+  @IsIn(ASSIGNABLE_ROLES)
+  role: AssignableRole;
 }
