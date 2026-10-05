@@ -62,7 +62,7 @@ export class OrganizationService {
         })
         if (user)
             throw new BadRequestException("email already in use");
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
         await this.prisma.users.create({
             data: {
@@ -133,5 +133,5 @@ export class OrganizationService {
         return { message: 'User role has been updated', userId, role };
     }
 }
-    
+
 

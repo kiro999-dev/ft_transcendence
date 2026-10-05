@@ -43,7 +43,7 @@ export class OrganizationController {
         const orgID = request.user.organizationId
         return this.orgService.changeOrganizationName(orgName.organizationName, orgID)
     }
-    @ROLES('owner')
+    @ROLES('owner','moderator')
     @UseGuards(AuthenticationGuard, AuthorizationGuard)
     @Post('/users')
     async addUserToOrganization(@Body() StaffUser: StaffUserDto, @Req() req: any) {
@@ -62,7 +62,7 @@ export class OrganizationController {
     removeUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
         return this.orgService.removeUserOrganization(req.user.organizationId, id)
     }
-    @ROLES('owner')
+    @ROLES('owner','moderator')
     @UseGuards(AuthenticationGuard, AuthorizationGuard)
     @Patch('users/:id/role')
     changeUserRole(@Param('id', ParseUUIDPipe) id: string, @Req() req: any,@Body() roleData:RoleDto) {
