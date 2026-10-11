@@ -1,0 +1,320 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Manrope", sans-serif;
+  --font-sans: "Manrope", sans-serif;
+}
+
+/* Basic page defaults for the standalone CRM page. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: "Manrope", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.font-display {
+  font-family: "Manrope", sans-serif;
+}
+
+/* Small labels used above section titles. */
+.eyebrow,
+.section-label {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Shared button styles. Blue is reserved for primary actions. */
+.icon-button {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 9px;
+  color: #64748b;
+  transition: background 0.18s, color 0.18s;
+}
+
+.icon-button:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.primary-button,
+.secondary-button,
+.select-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  padding: 9px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.18s, transform 0.18s;
+}
+
+.primary-button {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 3px 7px #2563eb30;
+}
+
+.primary-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.secondary-button,
+.select-button {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+}
+
+.secondary-button:hover,
+.select-button:hover {
+  background: #f8fafc;
+}
+
+/* White cards with the same simple border treatment everywhere. */
+.stat-card,
+.panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px #0f172a08;
+}
+
+.stat-card {
+  padding: 18px;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.stat-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.stage {
+  border-radius: 11px;
+  background: #f8fafc;
+  padding: 13px;
+}
+
+/* Search and form fields use the light grey surface. */
+.search-input,
+.form-input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #f8fafc;
+  padding: 9px 12px;
+  color: #0f172a;
+  outline: none;
+  font-size: 13px;
+}
+
+.search-input {
+  padding-left: 38px;
+}
+
+.search-input:focus,
+.form-input:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #eff6ff;
+}
+
+.filter-pill {
+  white-space: nowrap;
+  border-radius: 7px;
+  padding: 8px 11px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.filter-pill:hover {
+  background: #f8fafc;
+}
+
+.filter-active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.page-button {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 7px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.page-button:hover {
+  background: #f8fafc;
+}
+
+.page-current {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* The lead details drawer. */
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  width: min(100%, 440px);
+  height: 100%;
+  flex-direction: column;
+  background: #ffffff;
+  box-shadow: -10px 0 40px #0f172a20;
+  animation: slide-in 0.22s ease-out;
+}
+
+.drawer-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px 4px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.drawer-action:hover {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 10px 0;
+}
+
+.detail-row:first-child {
+  padding-top: 0;
+}
+
+.detail-row:last-child {
+  border: 0;
+  padding-bottom: 0;
+}
+
+.detail-row span {
+  color: #94a3b8;
+}
+
+.detail-row strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-dot {
+  position: absolute;
+  top: 2px;
+  left: -25px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #ffffff;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(-50%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px 14px;
+  box-shadow: 0 10px 30px #0f172a20;
+  font-size: 13px;
+  font-weight: 700;
+  animation: toast-in 0.22s ease-out;
+}
+
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 17px;
+  }
+
+  .drawer {
+    width: 100%;
+  }
+}

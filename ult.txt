@@ -1,0 +1,33 @@
+[1mdiff --git a/apps/frontend/package.json b/apps/frontend/package.json[m
+[1mindex c61657d..bc3fcf9 100644[m
+[1m--- a/apps/frontend/package.json[m
+[1m+++ b/apps/frontend/package.json[m
+[36m@@ -16,6 +16,7 @@[m
+     "react-dom": "^19.2.8",[m
+     "react-hot-toast": "^2.6.1",[m
+     "react-icons": "^5.7.0",[m
+[32m+[m[32m    "lucide-react": "^1.48.0",[m
+     "react-router-dom": "^7.18.4",[m
+     "tailwindcss": "^4.3.3"[m
+   },[m
+[1mdiff --git a/apps/frontend/src/App.tsx b/apps/frontend/src/App.tsx[m
+[1mindex b5d47f5..eb11a83 100644[m
+[1m--- a/apps/frontend/src/App.tsx[m
+[1m+++ b/apps/frontend/src/App.tsx[m
+[36m@@ -9,6 +9,7 @@[m [mimport { Dashboard } from "./home/Dashboard";[m
+ import { Toaster } from "react-hot-toast";[m
+ import { Profile } from "./home/componenets/Profile";[m
+ import { ResetPassword } from "./auth/RestPassword";[m
+[32m+[m[32mimport { Crm } from "./home/crm/crm";[m
+ function App() {[m
+ [m
+ [m
+[36m@@ -24,7 +25,7 @@[m [mfunction App() {[m
+         <Route path="*" element={<NotFound />} />[m
+         <Route element={<ProtectedRoute />}>[m
+           <Route path="/dashboard" element={<Dashboard />} />[m
+[31m-          <Route path="/crm" element={<Dashboard />} />[m
+[32m+[m[32m          <Route path="/crm" element={<Crm />} />[m
+           <Route path="/calendar" element={<Dashboard />} />[m
+           <Route path="/properties" element={<Dashboard />} />[m
+           <Route path="/me" element={<Profile />} />[m

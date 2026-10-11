@@ -38,7 +38,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: DashboardIcon },
-  { name: "CRM", href: "/crm", icon: CrmIcon },
+  { name: "CRM", href: "/dashboard/crm", icon: CrmIcon },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Properties", href: "/properties", icon: PropertiesIcon },
 ];
@@ -58,7 +58,7 @@ export const Sidebar = ({
   const { logout } = useAuth();
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
       {/* Brand */}
       <div className="px-6 py-6">
         <h3 className="text-xl font-extrabold text-blue-600">Auto Estate</h3>
@@ -90,7 +90,7 @@ export const Sidebar = ({
       </nav>
 
       {/* Profile + logout */}
-      <div className="border-t border-slate-200 p-3">
+      <div className="mt-auto shrink-0 border-t border-slate-200 p-3">
         <Link
           to="/me"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-slate-50"
