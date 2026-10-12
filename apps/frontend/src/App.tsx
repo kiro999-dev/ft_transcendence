@@ -6,6 +6,7 @@ import { NotFound } from "./Notfound/Notfound";
 import { ForgotPassword } from "./auth/ForgotPassword";
 import { ProtectedRoute } from "./auth/ProtectedRout";
 import { Dashboard } from "./home/Dashboard";
+import {Calendar} from "./home/calendar/calendar"
 import { Toaster } from "react-hot-toast";
 import { Profile } from "./home/componenets/Profile";
 import { ResetPassword } from "./auth/RestPassword";
@@ -25,7 +26,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/crm" element={<Dashboard />} />
-          <Route path="/calendar" element={<Dashboard />} />
+          <Route path="/calendar" element={<Calendar />} />
           <Route path="/properties" element={<Dashboard />} />
           <Route path="/me" element={<Profile />} />
         </Route>

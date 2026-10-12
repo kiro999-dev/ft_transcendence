@@ -10,6 +10,7 @@ import { TokensModule } from './tokens/tokens.module';
 import { EmailModule } from './email/email/email.module';
 import { OrganizationService } from './organization/organization.service';
 import { OrganizationModule } from './organization/organization.module';
+import { BookingModule } from './booking/booking.module';
 @Module({
   controllers: [AppController],
   providers: [AppService, OrganizationService],
@@ -33,7 +34,8 @@ import { OrganizationModule } from './organization/organization.module';
    
     TokensModule,
     EmailModule,
-    OrganizationModule
+    OrganizationModule,
+    BookingModule
   ],
 })
 export class AppModule {}
