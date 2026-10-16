@@ -24,6 +24,10 @@
     Roboto, sans-serif;
 }
 
+button {
+  cursor: pointer;
+}
+
 html {
   scroll-behavior: smooth;
 }

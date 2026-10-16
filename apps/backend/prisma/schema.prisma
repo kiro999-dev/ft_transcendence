@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,8 +15,6 @@ model organizations {
   created_at        DateTime           @default(now()) @db.Timestamp(6)
   updated_at        DateTime           @default(now()) @db.Timestamp(6)
   ai_settings       ai_settings?
-  bookings          bookings[]
-  calendar_events   calendar_events[]
   leads             leads[]
   properties        properties[]
   users             users[]
@@ -32,40 +31,6 @@ model ai_settings {
   created_at              DateTime      @default(now()) @db.Timestamp(6)
   updated_at              DateTime      @default(now()) @db.Timestamp(6)
   organizations           organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model bookings {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id String            @db.Uuid
-  lead_id         String?           @db.Uuid
-  property_id     String            @db.Uuid
-  visitor_id      String            @db.Uuid
-  visit_date      DateTime          @db.Timestamp(6)
-  status          String            @default("pending") @db.VarChar(50)
-  notes           String?
-  created_at      DateTime          @default(now()) @db.Timestamp(6)
-  updated_at      DateTime          @default(now()) @db.Timestamp(6)
-  leads           leads?            @relation(fields: [lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organizations   organizations     @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  properties      properties        @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  visitors        visitors          @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  calendar_events calendar_events[]
-}
-
-model calendar_events {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id String        @db.Uuid
-  user_id         String        @db.Uuid
-  booking_id      String?       @db.Uuid
-  title           String        @db.VarChar(255)
-  description     String?
-  start_time      DateTime      @db.Timestamp(6)
-  end_time        DateTime      @db.Timestamp(6)
-  created_at      DateTime      @default(now()) @db.Timestamp(6)
-  updated_at      DateTime      @default(now()) @db.Timestamp(6)
-  bookings        bookings?     @relation(fields: [booking_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model conversations {
@@ -90,7 +55,7 @@ model leads {
   notes           String?
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   updated_at      DateTime      @default(now()) @db.Timestamp(6)
-  bookings        bookings[]
+  Visit           Visit[]
   organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   properties      properties?   @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   visitors        visitors      @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -123,9 +88,9 @@ model properties {
   metadata           Json?                @db.Json
   created_at         DateTime             @default(now()) @db.Timestamp(6)
   updated_at         DateTime             @default(now()) @db.Timestamp(6)
-  bookings           bookings[]
   conversations      conversations[]
   leads              leads[]
+  Visit              Visit[]
   organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   property_documents property_documents[]
   property_images    property_images[]
@@ -165,7 +130,9 @@ model users {
   updated_at             DateTime          @default(now()) @db.Timestamp(6)
   reset_token            String?
   reset_token_expires_at DateTime?         @db.Timestamptz(6)
-  calendar_events        calendar_events[]
+  AgentAvailability      AgentAvailability[]
+  Visit                  Visit[]
+  CalendarException      CalendarException[]
   organizations          organizations?    @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -177,7 +144,6 @@ model visitors {
   phone           String?         @db.VarChar(50)
   created_at      DateTime        @default(now()) @db.Timestamp(6)
   updated_at      DateTime        @default(now()) @db.Timestamp(6)
-  bookings        bookings[]
   conversations   conversations[]
   leads           leads[]
   organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -190,4 +156,52 @@ model whatsapp_sessions {
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   updated_at      DateTime      @default(now()) @db.Timestamp(6)
   organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+
+model AgentAvailability {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @db.Uuid
+  startTime  DateTime @db.Timestamp(6)
+  endTime    DateTime @db.Timestamp(6)
+
+  user users @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, startTime])
+}
+
+model Visit {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @db.Uuid
+  property_id    String   @db.Uuid
+  leadId         String   @db.Uuid
+  date_of_visit  DateTime @db.Timestamp(6)
+  status         String   @default("PENDING")
+  startAt        DateTime @db.Timestamp(6)
+  endAt          DateTime @db.Timestamp(6)
+  VisitStatusHistory VisitStatusHistory[]
+
+  user     users      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  property properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  lead     leads      @relation(fields: [leadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model CalendarException {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @db.Uuid
+  startTime      DateTime @db.Timestamp(6)
+  endTime        DateTime @db.Timestamp(6)
+  reason         String?
+
+  user users @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+
+model VisitStatusHistory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId   String   @db.Uuid
+  status    String
+  changedAt DateTime @default(now()) @db.Timestamp(6)
+
+  visit Visit @relation(fields: [visitId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

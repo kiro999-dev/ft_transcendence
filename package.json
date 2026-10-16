@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "prisma": "^8.0.0-rc.22"
+  },
+  "dependencies": {
+    "wsl": "^1.0.0"
+  }
+}
