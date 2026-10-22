@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards,Req } from '@nestjs/common';
 import { BookingService } from './booking.service'
 import { GetAvailabilityDto } from '../dtos/availability.dto';
 
@@ -6,7 +6,8 @@ import { GetAvailabilityDto } from '../dtos/availability.dto';
 export class BookingController {
     constructor(private readonly bookingService: BookingService) { }
     @Post('availability')
-    getAvailability(@Body() body: GetAvailabilityDto) {
+    getAvailability(@Body() body: GetAvailabilityDto,@Req() request:any) {
+        const id = request.user.sub;
         return this.bookingService.getAvailability(body)
     }
 }

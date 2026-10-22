@@ -1,8 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import * as bcrypt from 'bcrypt';
-import { AssignableRole, Role } from '../decorator/roles.decorator';
+import { AssignableRole, ROLES } from '../decorator/roles.decorator';
+import { AuthorizationGuard } from '@nestjs/authorization';
 @Injectable()
 export class OrganizationService {
 
@@ -55,16 +56,16 @@ export class OrganizationService {
 
         const { firstName, lastName, email, phone, password } = StaffUser;
         const role: AssignableRole = StaffUser.role ?? 'staff';
-        const user = await this.prisma.users.findFirst({
+        const useremail = await this.prisma.users.findFirst({
             where: {
                 email
             }
         })
-        if (user)
+        if (useremail)
             throw new BadRequestException("email already in use");
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await this.prisma.users.create({
+        const user = await this.prisma.users.create({
             data: {
                 first_name: firstName,
                 last_name: lastName,
@@ -76,9 +77,18 @@ export class OrganizationService {
             },
         });
         return {
+            member: {
+                id: user.id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role
+            },
             message: "user added to Organization "
         }
     }
+    
     async getOrganizationUsers(orgId: string) {
         return this.prisma.users.findMany({
             where: {
@@ -133,5 +143,3 @@ export class OrganizationService {
         return { message: 'User role has been updated', userId, role };
     }
 }
-
-
