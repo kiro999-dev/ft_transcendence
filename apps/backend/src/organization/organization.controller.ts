@@ -1,19 +1,72 @@
-import { Controller, Get, UseGuards, Req, NotFoundException } from '@nestjs/common';
-import { AuthGuard } from '../guards/auth.guard';
+import { Controller, Get, UseGuards, Req, NotFoundException, Body, Post, Delete, Param, ParseUUIDPipe, Patch } from '@nestjs/common';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 import { OrganizationService } from './organization.service';
+import { StaffUserDto } from '../dtos/StaffUserDto';
+import { AuthorizationGuard } from '../guards/authorization.guard';
+import {ROLES } from '../decorator/roles.decorator';
+import type { Role } from '../decorator/roles.decorator';
+import { orgNameDto } from '../dtos/orgName.dto';
+import { request } from 'http';
+import { RoleDto } from '../dtos/role.dto';
 
 @Controller('organization')
 export class OrganizationController {
-    constructor (private orgService:OrganizationService){}
-    @UseGuards(AuthGuard)
-    @Get('')
+    constructor(private orgService: OrganizationService) { }
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Get('all')
+    @ROLES('admin')
+    async getAllOrganizations() {
+        return this.orgService.getAllOrganizations()
+    }
+    @ROLES('admin')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Delete(':id')
+    async deleteOrganization(@Param('id', ParseUUIDPipe) id: string) {
+        await this.orgService.deleteOrganization(id)
+        return { message: 'Organization has been deleted' }
+    }
+    @UseGuards(AuthenticationGuard)
+    @Get('us')
     async getOrganization(@Req() req: any) {
         const orgId = req.user.organizationId
         const org = await this.orgService.getOrganizationById(orgId);
-        if(!org)
+        if (!org)
             throw new NotFoundException("Organization Not found");
         return {
-            organization_name:org.name
+            organization_name: org.name
         }
-  }
+    }
+    @ROLES('owner')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Patch('/us')
+    async changeOrganizationName(@Body() orgName: orgNameDto, @Req() request: any) {
+        const orgID = request.user.organizationId
+        return this.orgService.changeOrganizationName(orgName.organizationName, orgID)
+    }
+    @ROLES('owner','moderator')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Post('/users')
+    async addUserToOrganization(@Body() StaffUser: StaffUserDto, @Req() req: any) {
+        const orgId = req.user.organizationId
+        return this.orgService.addUserToOrganization(StaffUser, orgId);
+    }
+    @UseGuards(AuthenticationGuard)
+    @Get("/users")
+    async getOrganizationUsers(@Req() req: any) {
+        const orgId = req.user.organizationId
+        return this.orgService.getOrganizationUsers(orgId)
+    }
+    @ROLES('owner')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Delete('users/:id')
+    removeUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+        return this.orgService.removeUserOrganization(req.user.organizationId, id)
+    }
+    @ROLES('owner','moderator')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @Patch('users/:id/role')
+    changeUserRole(@Param('id', ParseUUIDPipe) id: string, @Req() req: any,@Body() roleData:RoleDto) {
+        return this.orgService.changeUserRole(req.user.organizationId, id,roleData.role)
+    }
+    
 }

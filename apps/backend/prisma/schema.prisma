@@ -62,7 +62,7 @@ model properties {
   Visit              Visit[]
   conversations      conversations[]
   leads              leads[]
-  organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   property_documents property_documents[]
   property_images    property_images[]
 }
@@ -84,7 +84,7 @@ model property_documents {
   metadata    Json?      @db.Json
   created_at  DateTime   @default(now()) @db.Timestamp(6)
   updated_at  DateTime   @default(now()) @db.Timestamp(6)
-  properties  properties @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model visitors {
@@ -97,7 +97,7 @@ model visitors {
   updated_at      DateTime        @default(now()) @db.Timestamp(6)
   conversations   conversations[]
   leads           leads[]
-  organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model conversations {
@@ -154,7 +154,7 @@ model whatsapp_sessions {
   session_name    String        @unique @db.VarChar(255)
   created_at      DateTime      @default(now()) @db.Timestamp(6)
   updated_at      DateTime      @default(now()) @db.Timestamp(6)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model AgentAvailability {
