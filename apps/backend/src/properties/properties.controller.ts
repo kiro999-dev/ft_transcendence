@@ -1,11 +1,14 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';
+import { PropertiesService } from './properties.service';
 
 @Controller('properties')
 export class PropertiesController {
+      constructor (private properties: PropertiesService) {}
     @Get('')
     @UseGuards(AuthGuard)
-    getAll():string{
-        return "properties is work";
+
+    async getAll(@Req() req: any){
+        return this.properties.findAll(req.user.organizationId);
     }
 }
