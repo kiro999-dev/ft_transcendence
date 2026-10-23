@@ -1,30 +1,27 @@
-from fastapi import FastAPI
-from app.models import ChatRequest
-from app.gemini_service import chat_with_tools
-from app.gemini_service import chat_with_tools
-app = FastAPI(
-    title="AI Real Estate Service",
-    version="0.1.0"
-)
+import logging
 
-# @app.post("/extract")
-# async def extract(request: ChatRequest):
-#     requirements = await extract_requirements(request.message)
-#     return requirements
+from fastapi import FastAPI, HTTPException
+
+from app.models import ChatRequest, ChatResponse
+from app.gemini_service import AIServiceError, chat_with_tools
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="AI Real Estate Service", version="0.1.0")
+
 
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok",
-        "service": "ai-service"
-    }
+    return {"status": "ok", "service": "ai-service"}
 
 
-@app.post("/chat")
+@app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    reply = await chat_with_tools(request.message)
+    try:
+        result = await chat_with_tools(request.message)
+    except AIServiceError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
 
-    return {
-        "message_received": request.message,
-        "reply": reply
-    }
+    logger.info("Chat completed with %s properties", len(result.properties))
+    return ChatResponse(message_received=request.message, **result.model_dump())
