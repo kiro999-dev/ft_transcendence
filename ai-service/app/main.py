@@ -13,6 +13,7 @@ app = FastAPI(title="AI Real Estate Service", version="0.1.0")
 
 @app.get("/health")
 async def health():
+    logger.info("Health endpoint has been called")
     return {"status": "ok", "service": "ai-service"}
 
 
