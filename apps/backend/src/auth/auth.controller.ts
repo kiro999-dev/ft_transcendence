@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { LoginDTO } from '../dtos/login.dto';
 import { refreshTokenDto } from '../dtos/refreshToken.dto';
 import { changePasswordDto } from '../dtos/changePassword.dto';
-import { AuthGuard } from '../guards/auth.guard';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 import { forgotPasswordDto } from '../dtos/forgotpass.dto'
 import { ResetPasswdDto } from '../dtos/resetpassword.dto';
 import type { Response } from 'express';
@@ -44,7 +44,7 @@ export class AuthController {
     return { accessToken, }
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthenticationGuard)
   @Patch('change-password')
   async changePassword(@Body() chpassdata: changePasswordDto, @Req() req: any) {
     const userid = req.user.sub;
@@ -58,20 +58,20 @@ export class AuthController {
   async forgotPassword(@Body() emailDto: forgotPasswordDto) {
     const { email } = emailDto;
 
-    return await this.auth.forgotPassword(email)
+    return this.auth.forgotPassword(email)
   }
 
   @Post('reset-password')
   async resetPassword(@Body() ResetPasswdDataDto: ResetPasswdDto) {
     const { NewPassword, reset_token } = ResetPasswdDataDto;
 
-    return await this.auth.resetPassword(NewPassword, reset_token);
+    return this.auth.resetPassword(NewPassword, reset_token);
   }
 
   @Post('logout')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthenticationGuard)
   async logout(@Req() req: any) {
     const userid = req.user.sub
-    return await this.auth.logout(userid);
+    return this.auth.logout(userid);
   }
 }
