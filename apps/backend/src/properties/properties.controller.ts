@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Param} from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe} from '@nestjs/common';
 import { AuthGuard } from '../guards/auth.guard';
 import { PropertiesService } from './properties.service';
 
@@ -13,7 +13,7 @@ export class PropertiesController {
     }
     @Get(':propertyId')
     @UseGuards(AuthGuard)
-    async getOne(@Param('propertyId') id: string, @Req() req: any){
+    async getOne(@Param('propertyId', ParseUUIDPipe) id: string, @Req() req: any){
         const property = await this.properties.findOne(id, req.user.organizationId);
         if (!property)
             throw new NotFoundException('Property not found');
