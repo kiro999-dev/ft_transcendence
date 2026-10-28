@@ -1,19 +1,15 @@
-// availability.dto.ts
-import { IsString, IsNotEmpty, IsDateString, IsOptional, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
 
 export class GetAvailabilityDto {
-  @IsString()
-  @IsNotEmpty()
-  property_id: string;
+    @IsNotEmpty()
+    @IsUUID()
+    property_id: string;
 
-  @IsDateString()
-  preferred_date: string;
+    @IsNotEmpty()
+    @IsString()
+    preferred_date: string;
 
-  @IsString()
-  @IsNotEmpty()
-  timezone: string;
-
-  @IsNumber()
-  @IsOptional()
-  duration_minutes?: number; // 👈 Zid hhad l-field hna!
+    @IsOptional()
+    @IsString()
+    timezone?: string;
 }
