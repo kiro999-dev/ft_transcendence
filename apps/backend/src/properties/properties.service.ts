@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
 
 @Injectable()
 export class PropertiesService {
@@ -21,4 +22,13 @@ export class PropertiesService {
             data: {...dto , organization_id: organizationId}
         });
     }
+   async update(dto: UpdatePropertyDto, propertyId: string, organizationId: string){
+    const property = await this.findOne(propertyId, organizationId);
+    if (!property)
+        return null;
+    return this.prisma.properties.update({
+        where: {id: propertyId},
+        data: {...dto, updated_at: new Date()},
+    });
+}
 }
