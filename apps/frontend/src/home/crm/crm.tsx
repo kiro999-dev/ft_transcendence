@@ -17,7 +17,6 @@ export function Crm() {
   const [showAdd, setShowAdd] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  // 1. Load the leads when the page opens
   useEffect(() => {
     async function loadLeads(token: string) {
       try {
@@ -33,7 +32,6 @@ export function Crm() {
     }
   }, [accessToken]);
 
-  // 2. When a lead is changed in the side panel, replace it in the list
   function handleUpdated(updated: Lead) {
     setLeads(leads.map((lead) => (lead.id === updated.id ? updated : lead)));
     setSelectedLead(updated);

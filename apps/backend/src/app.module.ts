@@ -10,7 +10,8 @@ import { TokensModule } from './tokens/tokens.module';
 import { EmailModule } from './email/email/email.module';
 import { OrganizationService } from './organization/organization.service';
 import { OrganizationModule } from './organization/organization.module';
-import { LeadsModule } from './leads/leads.module';
+import { BookingModule } from './booking/booking.module';
+import { PropertiesModule } from './properties/properties.module';
 @Module({
   controllers: [AppController],
   providers: [AppService, OrganizationService],
@@ -35,7 +36,8 @@ import { LeadsModule } from './leads/leads.module';
     TokensModule,
     EmailModule,
     OrganizationModule,
-    LeadsModule
+    BookingModule,
+    PropertiesModule,
   ],
 })
 export class AppModule {}

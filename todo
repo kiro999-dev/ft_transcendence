@@ -1,8 +1,6 @@
- add logout in frontend :done
- add add change password to frontend
- make the owner add users with role staff
- creat admin panale
-{
-    view all orgs with theire users
-    creat update and delet org 
-}
+
+
+Minor: Implement remote authentication with OAuth 2.0 (Google, GitHub, 42,
+etc.).
+Edit organization: PATCH /organization/us (owner changes the name).
+Roles management: PATCH /organization/users/:id/role, plus extending the Role type with guest, moderator, etc.

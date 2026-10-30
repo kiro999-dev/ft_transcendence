@@ -37,8 +37,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: DashboardIcon },
-  { name: "CRM", href: "/dashboard/crm", icon: CrmIcon },
+  { name: "CRM dashboard", href: "/crm-dashboard", icon: CrmIcon },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Properties", href: "/properties", icon: PropertiesIcon },
 ];
@@ -50,7 +49,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({
-  activeHref = "/dashboard",
+  activeHref = "/crm-dashboard",
   userName ,
   userEmail ,
 }: SidebarProps) => {
