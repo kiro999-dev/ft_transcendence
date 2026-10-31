@@ -23,12 +23,21 @@ export class PropertiesService {
         });
     }
    async update(dto: UpdatePropertyDto, propertyId: string, organizationId: string){
-    const property = await this.findOne(propertyId, organizationId);
-    if (!property)
-        return null;
-    return this.prisma.properties.update({
-        where: {id: propertyId},
-        data: {...dto, updated_at: new Date()},
-    });
-}
+        const property = await this.findOne(propertyId, organizationId);
+        if (!property)
+            return null;
+        return this.prisma.properties.update({
+            where: {id: propertyId},
+            data: {...dto, updated_at: new Date()},
+        });
+    }
+    async archive(propertyId: string, organizationId: string){
+        const property = await this.findOne(propertyId, organizationId);
+        if (!property)
+            return null;
+        return this.prisma.properties.update({
+            where: {id: propertyId},
+            data: {status: 'hidden', updated_at: new Date()},
+        });
+    }
 }
