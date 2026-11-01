@@ -37,7 +37,6 @@ export function Crm() {
     setSelectedLead(updated);
   }
 
-  // 3. Numbers for the cards and the pipeline
   function countStatus(status: string) {
     return leads.filter((lead) => lead.status === status).length;
   }
@@ -56,7 +55,6 @@ export function Crm() {
     { label: "Lost", count: countStatus("Lost"), color: "bg-slate-400" },
   ];
 
-  // 4. The page
   return (
     <div className="min-h-screen bg-slate-100 p-8">
       <div className="flex items-start justify-between gap-4">

@@ -1,6 +1,5 @@
 import type { LeadStatus } from "../../../services/crmService";
 
-// Every status a lead can have, in pipeline order
 export const STATUSES: LeadStatus[] = [
   "New",
   "Contacted",
@@ -10,7 +9,6 @@ export const STATUSES: LeadStatus[] = [
   "Lost",
 ];
 
-// Chip colors for each status
 export const statusColors: Record<string, string> = {
   New: "bg-blue-50 text-blue-600",
   Contacted: "bg-sky-50 text-sky-600",
@@ -20,7 +18,6 @@ export const statusColors: Record<string, string> = {
   Lost: "bg-slate-100 text-slate-500",
 };
 
-// "Sara Alaoui" → "SA"
 export function initials(name: string) {
   return name
     .split(" ")
@@ -30,13 +27,11 @@ export function initials(name: string) {
     .toUpperCase();
 }
 
-// "250000" → "250,000"   ""  → "—"
 export function formatBudget(budget: string) {
   if (!budget) return "—";
   return Number(budget).toLocaleString("en-US");
 }
 
-// "2026-10-28T10:00:00Z" → "Oct 28, 2026"
 export function formatDate(value: string) {
   const date = new Date(value);
   if (isNaN(date.getTime())) return "—";

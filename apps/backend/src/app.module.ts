@@ -12,6 +12,7 @@ import { OrganizationService } from './organization/organization.service';
 import { OrganizationModule } from './organization/organization.module';
 import { BookingModule } from './booking/booking.module';
 import { PropertiesModule } from './properties/properties.module';
+import { LeadsModule } from './leads/leads.module';
 @Module({
   controllers: [AppController],
   providers: [AppService, OrganizationService],
@@ -38,6 +39,7 @@ import { PropertiesModule } from './properties/properties.module';
     OrganizationModule,
     BookingModule,
     PropertiesModule,
+    LeadsModule,
   ],
 })
 export class AppModule {}

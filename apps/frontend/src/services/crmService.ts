@@ -1,6 +1,6 @@
-const API_BASE = 'http://localhost:3000';
+const API_BASE = "http://localhost:3000";
 
-export type LeadStatus = 'New' | 'Contacted' | 'Interested' | 'Visit Scheduled' | 'Closed';
+export type LeadStatus = "New" | "Contacted" | "Interested" | "Visit Scheduled" | "Closed" | "Lost";
 
 export type PropertyMatch = {
   id: string;
@@ -19,86 +19,44 @@ export type Lead = {
   budget: string;
   bedrooms: number | string;
   status: LeadStatus;
-  source: string;
   score: string;
   created_at: string;
   property_matches?: PropertyMatch[];
   notes?: string;
 };
 
-export async function fetchLeads(token: string, orgId: string): Promise<Lead[]> {
+
+export async function fetchLeads(token: string): Promise<Lead[]> {
   const res = await fetch(`${API_BASE}/leads`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-Id': orgId,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch leads: ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error("Failed to load leads");
   return res.json();
 }
 
-export async function findLeadByPhone(phone: string, token: string, orgId: string): Promise<Lead | null> {
-  const res = await fetch(`${API_BASE}/internal/ai/leads/phone?phone=${encodeURIComponent(phone)}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-Id': orgId,
-    },
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) {
-    throw new Error(`Failed to find lead by phone: ${res.statusText}`);
-  }
-  return res.json();
-}
 
-export async function createLead(leadData: Partial<Lead>, token: string, orgId: string): Promise<Lead> {
+export async function createLead(data: Partial<Lead>, token: string): Promise<Lead> {
   const res = await fetch(`${API_BASE}/leads`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-Id': orgId,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(leadData),
+    body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.message || `Failed to create lead: ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error("Failed to create lead");
   return res.json();
 }
 
-export async function updateLead(id: string, updateData: Partial<Lead>, token: string, orgId: string): Promise<Lead> {
+export async function updateLead(id: string, data: Partial<Lead>, token: string): Promise<Lead> {
   const res = await fetch(`${API_BASE}/leads/${id}`, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-Id': orgId,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(updateData),
+    body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.message || `Failed to update lead: ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error("Failed to update lead");
   return res.json();
-}
-
-export async function savePropertyMatches(leadId: string, matches: PropertyMatch[], token: string, orgId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/internal/ai/leads/${leadId}/matches`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Organization-Id': orgId,
-    },
-    body: JSON.stringify({ matches }),
-  });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.message || `Failed to save property matches: ${res.statusText}`);
-  }
 }

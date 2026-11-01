@@ -97,7 +97,7 @@ export const Login = () => {
 
       setUser(userData);
       toast.success("Welcome back! You're now signed in.");
-      navigate("/dashboard");
+      navigate("/crm-dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
     }

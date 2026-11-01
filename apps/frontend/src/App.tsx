@@ -1,7 +1,7 @@
 import { LandingPage } from "./landingPage/LandingPage"
 import { Login } from "./auth/Login"
 import { SignUp } from "./auth/SignUp"
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { NotFound } from "./Notfound/Notfound";
 import { ForgotPassword } from "./auth/ForgotPassword";
 import { ProtectedRoute } from "./auth/ProtectedRout";
@@ -26,6 +26,7 @@ function App() {
          <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
         <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Navigate to="/crm-dashboard" replace />} />
           <Route path="/crm-dashboard" element={<Dashboard><Crm /></Dashboard>} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/properties" element={<Dashboard />} />
