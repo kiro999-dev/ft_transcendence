@@ -3,6 +3,8 @@ import { AuthenticationGuard } from '../guards/authentication.guard';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { AuthorizationGuard } from '../guards/authorization.guard';
+import { ROLES } from '../decorator/roles.decorator';
 
 @Controller('properties')
 export class PropertiesController {
@@ -24,13 +26,15 @@ export class PropertiesController {
     }
 
     @Post('')
-    @UseGuards(AuthenticationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @ROLES('owner', 'moderator')
     async create(@Body() dto: CreatePropertyDto, @Req() req: any){
         return this.properties.create(dto, req.user.organizationId);
     }
     
     @Patch(':propertyId')
-    @UseGuards(AuthenticationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @ROLES('owner', 'moderator')
     async update(@Param('propertyId', ParseUUIDPipe) id:string, @Body() dto: UpdatePropertyDto, @Req() req: any){
         const property = await this.properties.update(dto, id, req.user.organizationId);
         if (!property)
@@ -39,7 +43,8 @@ export class PropertiesController {
     }
 
     @Delete(':propertyId')
-    @UseGuards(AuthenticationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @ROLES('owner', 'moderator')
     async archive(@Param('propertyId', ParseUUIDPipe) id: string, @Req() req: any){
         const property = await this.properties.archive(id, req.user.organizationId);
         if (!property)
