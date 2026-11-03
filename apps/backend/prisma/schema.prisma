@@ -116,15 +116,6 @@ model property_documents {
   properties  properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model property_images {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  property_id   String     @db.Uuid
-  image_url     String
-  display_order Int        @default(0)
-  created_at    DateTime   @default(now()) @db.Timestamp(6)
-  properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
 model users {
   id                     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization_id        String?           @db.Uuid
@@ -156,54 +147,6 @@ model visitors {
   conversations   conversations[]
   leads           leads[]
   organizations   organizations   @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model conversations {
-  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  visitor_id      String      @db.Uuid
-  property_id     String?     @db.Uuid
-  started_at      DateTime    @default(now()) @db.Timestamp(6)
-  last_message_at DateTime    @default(now()) @db.Timestamp(6)
-  properties      properties? @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  visitors        visitors    @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  messages        messages[]
-}
-
-model messages {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  conversation_id String        @db.Uuid
-  sender_type     String        @db.VarChar(20)
-  content         String
-  created_at      DateTime      @default(now()) @db.Timestamp(6)
-  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model leads {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id String        @db.Uuid
-  visitor_id      String        @db.Uuid
-  property_id     String?       @db.Uuid
-  status          String        @default("new") @db.VarChar(50)
-  score           Int?
-  budget          Decimal?      @db.Decimal(14, 2)
-  notes           String?
-  created_at      DateTime      @default(now()) @db.Timestamp(6)
-  updated_at      DateTime      @default(now()) @db.Timestamp(6)
-  Visit           Visit[]
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  properties      properties?   @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  visitors        visitors      @relation(fields: [visitor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model ai_settings {
-  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id         String        @unique @db.Uuid
-  welcome_message         String?
-  qualification_questions Json?         @db.Json
-  booking_enabled         Boolean       @default(true)
-  created_at              DateTime      @default(now()) @db.Timestamp(6)
-  updated_at              DateTime      @default(now()) @db.Timestamp(6)
-  organizations           organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model whatsapp_sessions {
