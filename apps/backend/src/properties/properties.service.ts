@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { QueryPropertyDto } from './dto/query-property.dto';
 
 @Injectable()
 export class PropertiesService {
     constructor (private prisma: PrismaService) {}
 
-    async findAll(organizationId: string){
+    async findAll(organizationId: string, query: QueryPropertyDto){
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 20;
         return this.prisma.properties.findMany({
             where: { organization_id: organizationId},
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: {created_at: 'desc'},
         });
     }
     async findOne(propertyId: string, organizationId: string){
