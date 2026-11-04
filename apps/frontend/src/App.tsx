@@ -11,6 +11,7 @@ import { Toaster } from "react-hot-toast";
 import { Profile } from "./home/componenets/Profile";
 import { ResetPassword } from "./auth/RestPassword";
 import { ChangePassword } from "./auth/ChangePassword";
+import { OrgSettings } from "./home/componenets/OrganizationSettings";
 function App() {
 
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/properties" element={<Dashboard />} />
           <Route path="/me" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
+           <Route path="/organization" element={<OrgSettings/>} />
         </Route>
       </Routes>
 
