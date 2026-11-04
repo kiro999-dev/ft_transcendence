@@ -14,7 +14,7 @@ export class OtpService {
   
   async sendOtp(user: { id: string; email: string; first_name: string; otp_last_sent_at?: Date | null }) {
     // cooldown 60s
-    if (user.otp_last_sent_at && Date.now() - new Date(user.otp_last_sent_at).getTime() < 60_000) {
+    if (user.otp_last_sent_at && Date.now() - new Date(user.otp_last_sent_at).getTime() < 10_000) {
       throw new BadRequestException('Please wait before requesting a new code');
     }
 

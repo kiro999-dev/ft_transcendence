@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import toast from "react-hot-toast";
 
 type User = {
+  two_fa?:boolean
   id: string;
   email: string;
   first_name: string;
