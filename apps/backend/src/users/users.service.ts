@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException,BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'
 import * as bcrypt from 'bcrypt';
 import { SignUpDto } from '../dtos/signup.dto';
@@ -9,6 +9,52 @@ import { UpdateProfileDto } from '../dtos/updateProfile.dto';
 export class UsersService {
 
     constructor(private prisma: PrismaService) { }
+    //otp
+    async saveOtp(userId: string, otpData: any) {
+        await this.prisma.users.update({
+            where: {
+                id: userId
+            },
+            data: otpData
+        })
+    }
+    async incrementOtpAttempts(userId: string) {
+        const user = await this.prisma.users.findUnique({ where: { id: userId } })
+        if (!user)
+            throw new NotFoundException("User not Found")
+        const U_otp_attempts = user.otp_attempts
+        await this.prisma.users.update({
+            where: {
+                id: userId
+            },
+            data: {
+                otp_attempts: U_otp_attempts + 1
+            }
+        })
+    }
+    async clearOtp(userId:string) {
+        await this.prisma.users.update(
+            {
+                where
+                    : {
+                    id: userId
+                },
+                data:{
+                    otp_hash:null
+                }
+            })
+    }
+    async update2fa(userId:string,towfa:boolean)
+    {
+        await this.prisma.users.update({
+            where:{
+                id:userId
+            },
+            data:{
+                two_fa:towfa
+            }
+        })
+    }
 
     async findUserbyEmail(email: string) {
         const user = await this.prisma.users.findUnique({
@@ -140,4 +186,6 @@ export class UsersService {
         await this.prisma.users.delete({ where: { id: targetId } });
         return { message: 'User has been deleted' };
     }
+
+
 }

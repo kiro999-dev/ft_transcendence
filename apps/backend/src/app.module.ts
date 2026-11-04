@@ -12,9 +12,11 @@ import { OrganizationService } from './organization/organization.service';
 import { OrganizationModule } from './organization/organization.module';
 import { BookingModule } from './booking/booking.module';
 import { PropertiesModule } from './properties/properties.module';
+import { OtpService } from './otp/otp.service';
+import { OtpModule } from './otp/otp.module';
 @Module({
   controllers: [AppController],
-  providers: [AppService, OrganizationService],
+  providers: [AppService, OrganizationService, OtpService],
   imports: [
     AuthModule, 
     UsersModule, 
@@ -38,6 +40,7 @@ import { PropertiesModule } from './properties/properties.module';
     OrganizationModule,
     BookingModule,
     PropertiesModule,
+    OtpModule,
   ],
 })
 export class AppModule {}
