@@ -11,8 +11,20 @@ export class PropertiesService {
     async findAll(organizationId: string, query: QueryPropertyDto){
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 20;
+        const where: any = { organization_id: organizationId};
+
+        if (query.city)
+            where.city = query.city;
+        if (query.listing_type)
+            where.listing_type = query.listing_type;
+        if (query.property_type)
+            where.property_type = query.property_type;
+        if (query.status)
+            where.status = query.status;
+        else
+            where.status = {not: 'hidden'};
         return this.prisma.properties.findMany({
-            where: { organization_id: organizationId},
+            where: where,
             skip: (page - 1) * limit,
             take: limit,
             orderBy: {created_at: 'desc'},
