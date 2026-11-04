@@ -15,6 +15,7 @@ import { OtpService } from '../otp/otp.service';
 
 @Injectable()
 export class AuthService {
+
   constructor(
     private jwt: JwtService,
     private config: ConfigService,
@@ -22,7 +23,9 @@ export class AuthService {
     private Token: TokensService,
     private emailService: EmailService,
     private otpService: OtpService
-  ) { }
+  ) {
+
+  }
 
   async signup(SignUpdata: SignUpDto) {
     const { email } = SignUpdata;
@@ -160,8 +163,7 @@ export class AuthService {
       message: 'Logged out successfully',
     };
   }
-  async resendOtp(tempToken: string)
-  {
+  async resendOtp(tempToken: string) {
     let payload;
     try {
       payload = this.jwt.verify(tempToken, {
@@ -172,11 +174,11 @@ export class AuthService {
     }
     if (!payload.twoFactorPending) throw new UnauthorizedException();
     const user = await this.userService.findUserbyId(payload.sub)
-    if(!user)
+    if (!user)
       throw new NotFoundException("User not Found")
     await this.otpService.sendOtp(user)
     return {
-      message:"Check your email. The otp code expires in 10 minutes."
+      message: "Check your email. The otp code expires in 10 minutes."
     }
   }
   async verifyLoginOtp(tempToken: string, code: string) {
@@ -215,7 +217,7 @@ export class AuthService {
     if (!user.two_fa) throw new BadRequestException('2FA is already disabled');
 
     await this.userService.update2fa(userId, false);
-    await this.userService.clearOtp(userId); 
+    await this.userService.clearOtp(userId);
     return { message: '2FA disabled successfully' };
   }
 }
