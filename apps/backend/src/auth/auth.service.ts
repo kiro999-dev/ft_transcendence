@@ -11,16 +11,21 @@ import { changePasswordDto } from '../dtos/changePassword.dto';
 import { nanoid } from 'nanoid';
 import { EmailService } from '../email/email/email.service';
 import { sendEmailDto } from '../dtos/email.dto';
+import { OtpService } from '../otp/otp.service';
 
 @Injectable()
 export class AuthService {
+
   constructor(
     private jwt: JwtService,
     private config: ConfigService,
     private userService: UsersService,
     private Token: TokensService,
     private emailService: EmailService,
-  ) {}
+    private otpService: OtpService
+  ) {
+
+  }
 
   async signup(SignUpdata: SignUpDto) {
     const { email } = SignUpdata;
@@ -40,12 +45,23 @@ export class AuthService {
     const { email, password } = LogInData;
 
     const user = await this.userService.findUserbyEmail(email);
-
     if (!user) throw new UnauthorizedException('incorrect email or password ');
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch)
-      throw new UnauthorizedException('incorrect email or password ');
+    if (!isMatch) throw new UnauthorizedException('incorrect email or password ');
+
+
+    if (user.two_fa) {
+      await this.otpService.sendOtp(user);
+      const tempToken = this.jwt.sign(
+        { sub: user.id, twoFactorPending: true },
+        {
+          secret: this.config.getOrThrow<string>('TEMP_TOKEN_SECRET'),
+          expiresIn: '10m',
+        },
+      );
+      return { twoFactorRequired: true, tempToken };
+    }
 
     const { accessToken, refreshToken } = this.Token.generateTokens(
       user.id,
@@ -53,18 +69,18 @@ export class AuthService {
       user.role,
     );
     await this.Token.saveToken(refreshToken, user.id);
-    return { accessToken ,refreshToken};
+    return { accessToken, refreshToken };
   }
 
   async refreshToken(token: string) {
-   
+
     let payload;
     try {
       payload = this.jwt.verify(token, {
         secret: this.config.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
       });
     } catch {
-    
+
       throw new UnauthorizedException('invalid refresh token');
     }
     const user = await this.userService.findUserbyId(payload.sub);
@@ -80,7 +96,7 @@ export class AuthService {
       user.organization_id,
       user.role,
     );
- 
+
     await this.Token.saveToken(refreshToken, payload.sub);
     return { accessToken, refreshToken };
   }
@@ -146,5 +162,62 @@ export class AuthService {
     return {
       message: 'Logged out successfully',
     };
+  }
+  async resendOtp(tempToken: string) {
+    let payload;
+    try {
+      payload = this.jwt.verify(tempToken, {
+        secret: this.config.getOrThrow<string>('TEMP_TOKEN_SECRET'),
+      });
+    } catch {
+      throw new UnauthorizedException('Session expired, log in again');
+    }
+    if (!payload.twoFactorPending) throw new UnauthorizedException();
+    const user = await this.userService.findUserbyId(payload.sub)
+    if (!user)
+      throw new NotFoundException("User not Found")
+    await this.otpService.sendOtp(user)
+    return {
+      message: "Check your email. The otp code expires in 10 minutes."
+    }
+  }
+  async verifyLoginOtp(tempToken: string, code: string) {
+    let payload;
+    try {
+      payload = this.jwt.verify(tempToken, {
+        secret: this.config.getOrThrow<string>('TEMP_TOKEN_SECRET'),
+      });
+    } catch {
+      throw new UnauthorizedException('Session expired, log in again');
+    }
+    if (!payload.twoFactorPending) throw new UnauthorizedException();
+
+    const user = await this.otpService.verifyOtp(payload.sub, code);
+
+    const { accessToken, refreshToken } = this.Token.generateTokens(
+      user.id,
+      user.organization_id,
+      user.role,
+    );
+    await this.Token.saveToken(refreshToken, user.id);
+    return { accessToken, refreshToken };
+  }
+  async enableTwoFa(userId: string) {
+    const user = await this.userService.findUserbyId(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.two_fa) throw new BadRequestException('2FA is already enabled');
+
+    await this.userService.update2fa(userId, true);
+    return { message: '2FA enabled successfully' };
+  }
+
+  async disableTwoFa(userId: string) {
+    const user = await this.userService.findUserbyId(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (!user.two_fa) throw new BadRequestException('2FA is already disabled');
+
+    await this.userService.update2fa(userId, false);
+    await this.userService.clearOtp(userId);
+    return { message: '2FA disabled successfully' };
   }
 }

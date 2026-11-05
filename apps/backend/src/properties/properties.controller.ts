@@ -1,8 +1,11 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body, Patch} from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body, Patch, Delete, Query} from '@nestjs/common';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
+import { QueryPropertyDto } from './dto/query-property.dto';
+import { AuthorizationGuard } from '../guards/authorization.guard';
+import { ROLES } from '../decorator/roles.decorator';
 
 @Controller('properties')
 export class PropertiesController {
@@ -10,8 +13,8 @@ export class PropertiesController {
     @Get('')
     @UseGuards(AuthenticationGuard)
 
-    async getAll(@Req() req: any){
-        return this.properties.findAll(req.user.organizationId);
+    async getAll(@Query() query: QueryPropertyDto, @Req() req: any){
+        return this.properties.findAll(req.user.organizationId, query);
     }
 
     @Get(':propertyId')
@@ -24,15 +27,27 @@ export class PropertiesController {
     }
 
     @Post('')
-    @UseGuards(AuthenticationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @ROLES('owner', 'moderator')
     async create(@Body() dto: CreatePropertyDto, @Req() req: any){
         return this.properties.create(dto, req.user.organizationId);
     }
     
     @Patch(':propertyId')
-    @UseGuards(AuthenticationGuard)
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @ROLES('owner', 'moderator')
     async update(@Param('propertyId', ParseUUIDPipe) id:string, @Body() dto: UpdatePropertyDto, @Req() req: any){
         const property = await this.properties.update(dto, id, req.user.organizationId);
+        if (!property)
+            throw new NotFoundException('Property not found');
+        return property;
+    }
+
+    @Delete(':propertyId')
+    @UseGuards(AuthenticationGuard, AuthorizationGuard)
+    @ROLES('owner', 'moderator')
+    async archive(@Param('propertyId', ParseUUIDPipe) id: string, @Req() req: any){
+        const property = await this.properties.archive(id, req.user.organizationId);
         if (!property)
             throw new NotFoundException('Property not found');
         return property;

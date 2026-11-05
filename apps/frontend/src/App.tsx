@@ -12,6 +12,8 @@ import { Profile } from "./home/componenets/Profile";
 import { ResetPassword } from "./auth/RestPassword";
 import { ChangePassword } from "./auth/ChangePassword";
 import { Crm } from "./home/crm/crm";
+import { OrgSettings } from "./home/componenets/OrganizationSettings";
+import { TwoFactor } from "./auth/TwoFactor";
 function App() {
 
 
@@ -22,6 +24,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/two-factor" element={<TwoFactor />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
          <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<NotFound />} />
@@ -32,6 +35,7 @@ function App() {
           <Route path="/properties" element={<Dashboard />} />
           <Route path="/me" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
+           <Route path="/organization" element={<OrgSettings/>} />
         </Route>
       </Routes>
 
