@@ -57,10 +57,10 @@ def search_properties(
         if property_type and prop.property_type.lower() != property_type.lower():
             continue
 
-        if max_price and prop.price > max_price:
+        if max_price is not None and prop.price > max_price:
             continue
 
-        if bedrooms and prop.bedrooms < bedrooms:
+        if bedrooms is not None and prop.bedrooms < bedrooms:
             continue
 
         matches.append(prop.model_dump())
