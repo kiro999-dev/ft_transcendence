@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body} from '@nestjs/common';
-import { AuthGuard } from '../guards/auth.guard';
+import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body } from '@nestjs/common';
+import { AuthenticationGuard } from '../guards/authentication.guard';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 
@@ -7,13 +7,13 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 export class PropertiesController {
       constructor (private properties: PropertiesService) {}
     @Get('')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthenticationGuard)
 
     async getAll(@Req() req: any){
         return this.properties.findAll(req.user.organizationId);
     }
     @Get(':propertyId')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthenticationGuard)
     async getOne(@Param('propertyId', ParseUUIDPipe) id: string, @Req() req: any){
         const property = await this.properties.findOne(id, req.user.organizationId);
         if (!property)
@@ -22,7 +22,7 @@ export class PropertiesController {
     }
 
     @Post('')
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthenticationGuard)
     async create(@Body() dto: CreatePropertyDto, @Req() req: any){
         return this.properties.create(dto, req.user.organizationId);
     }
