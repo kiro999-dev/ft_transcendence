@@ -3,8 +3,14 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
 
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=4000)
+
+
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=20)
 
     @field_validator("message")
     @classmethod
@@ -35,10 +41,13 @@ class PropertyRequirements(BaseModel):
 class Property(BaseModel):
     id: str
     city: str
-    price: int
-    bedrooms: int
+    price: float
+    bedrooms: Optional[int] = None
     property_type: str
-    available: bool
+    available: Optional[bool] = None
+    status: Optional[str] = None
+    title: Optional[str] = None
+    images: list = Field(default_factory=list)
 
 class VisitSlot(BaseModel):
     starts_at: datetime
@@ -56,10 +65,34 @@ class Availability(BaseModel):
 class ChatResult(BaseModel):
     reply: str
     properties: list[Property] = Field(default_factory=list)
-    property_source: Literal["mock"] = "mock"
+    property_source: Literal["mock", "backend"] = "mock"
     availability: list[Availability] = Field(default_factory=list)
     tool_errors: list[str] = Field(default_factory=list)
+    knowledge_sources: list[dict] = Field(default_factory=list)
 
 
 class ChatResponse(ChatResult):
     message_received: str
+
+
+class BookingRequest(BaseModel):
+    lead_id: str
+    contact_id: str
+    property_id: str
+    agent_id: str
+    starts_at: datetime
+    customer_notes: Optional[str] = Field(default=None, max_length=1000)
+    confirmed_by_customer: Literal[True]
+
+    @field_validator('lead_id', 'contact_id', 'property_id', 'agent_id')
+    @classmethod
+    def valid_uuid(cls, value: str) -> str:
+        from uuid import UUID
+        return str(UUID(value))
+
+    @field_validator('starts_at')
+    @classmethod
+    def timezone_required(cls, value: datetime) -> datetime:
+        if value.utcoffset() is None:
+            raise ValueError('Timezone is required')
+        return value

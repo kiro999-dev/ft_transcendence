@@ -27,13 +27,14 @@ class FakeGemini:
     async def generate_content(self, *, contents, config, **kwargs):
         # Interleave requests to check that their property lists stay separate.
         await asyncio.sleep(0)
-        if contents == "check booking":
+        message = contents[-1].parts[0].text
+        if message == "check booking":
             await config.tools[1](
                 property_id="8da5d667-a895-42ac-bcb8-3de773c80179",
                 preferred_date="2026-11-01",
             )
         else:
-            config.tools[0](city=contents)
+            await config.tools[0](city=message)
         return SimpleNamespace(text="Demo search completed.", function_calls=None)
 
 
@@ -99,6 +100,30 @@ class ChatTests(unittest.IsolatedAsyncioTestCase):
             response = await self.client.post('/chat', json={'message': 'check booking'})
         self.assertEqual(response.json()['availability'], [])
         self.assertEqual(response.json()['tool_errors'], ['Unavailable'])
+
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
+    @patch('app.gemini_service.genai.Client', return_value=FakeGemini())
+    async def test_history_is_sent_to_gemini(self, client):
+        fake = client.return_value
+        original = fake.generate_content
+        seen = []
+        async def capture(**kwargs):
+            seen.extend(kwargs['contents'])
+            return await original(**kwargs)
+        fake.generate_content = capture
+        response = await self.client.post('/chat', json={
+            'message': 'marrakech', 'history': [
+                {'role': 'user', 'content': 'I need a home'},
+                {'role': 'assistant', 'content': 'Which city?'},
+            ]})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item.role for item in seen], ['user', 'model', 'user'])
+        self.assertEqual(seen[0].parts[0].text, 'I need a home')
+
+    async def test_history_limit(self):
+        response = await self.client.post('/chat', json={
+            'message': 'Hello', 'history': [{'role': 'user', 'content': 'Hi'}] * 21})
+        self.assertEqual(response.status_code, 422)
 
     async def test_zero_budget_returns_no_properties(self):
         self.assertEqual(search_properties(max_price=0)['properties'], [])

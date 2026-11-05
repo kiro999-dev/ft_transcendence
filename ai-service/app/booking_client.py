@@ -47,3 +47,28 @@ async def get_availability(property_id: str, preferred_date: str) -> dict:
         return {"error": "The booking service could not check availability. Try again later."}
     except (httpx.RequestError, ValidationError, ValueError):
         return {"error": "The booking service is unavailable or returned invalid data. Try again later."}
+
+
+async def create_visit(data: dict) -> dict:
+    """Send an explicitly confirmed booking request to the booking service."""
+    if os.getenv('BOOKING_ENABLED', '').lower() != 'true':
+        return {'error': 'Booking creation is not enabled.'}
+    token = os.getenv('AI_SERVICE_TOKEN')
+    organization_id = os.getenv('AI_ORGANIZATION_ID')
+    if not token or not organization_id:
+        return {'error': 'Booking service credentials are not configured.'}
+    url = os.getenv('BACKEND_URL', 'http://localhost:3000').rstrip('/') + '/internal/ai/visits'
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(url, json=data, headers={
+                'Authorization': f'Bearer {token}', 'X-Organization-Id': organization_id})
+        if response.status_code == 409:
+            return {'error': 'This slot is no longer available.'}
+        response.raise_for_status()
+        result = response.json()
+        if not isinstance(result, dict) or not result.get('visit_id') or result.get('status') not in ('confirmed', 'demo'):
+            raise ValueError('Invalid booking response')
+        return result
+    except (httpx.HTTPError, ValueError):
+        # A timeout does not prove that the backend failed to create a visit.
+        return {'error': 'Booking result is unknown. Check with the agency before retrying.'}

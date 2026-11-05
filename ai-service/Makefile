@@ -13,6 +13,7 @@ run:
 		--add-host=host.docker.internal:host-gateway \
 		-e BACKEND_URL=$(BACKEND_URL) \
 		-p $(PORT):8000 \
+		-v ai_service_data:/app/data \
 		$(IMAGE_NAME)
 
 stop:

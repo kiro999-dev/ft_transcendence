@@ -50,3 +50,18 @@ class BookingTests(unittest.IsolatedAsyncioTestCase):
         client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
         with patch('app.booking_client.httpx.AsyncClient', return_value=client):
             self.assertIn('error', await get_availability(PROPERTY_ID, '2026-11-01'))
+
+    @patch.dict('os.environ', {'BOOKING_ENABLED': 'true', 'AI_SERVICE_TOKEN': 'test', 'AI_ORGANIZATION_ID': 'org'})
+    async def test_create_visit_conflict_and_uncertain_error(self):
+        from app.booking_client import create_visit
+        async def check(status):
+            client = httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(status)))
+            with patch('app.booking_client.httpx.AsyncClient', return_value=client):
+                return await create_visit({'property_id': PROPERTY_ID})
+        self.assertIn('no longer available', (await check(409))['error'])
+        self.assertIn('unknown', (await check(500))['error'])
+
+    @patch.dict('os.environ', {'BOOKING_ENABLED': 'false'})
+    async def test_create_visit_disabled(self):
+        from app.booking_client import create_visit
+        self.assertIn('not enabled', (await create_visit({}))['error'])
