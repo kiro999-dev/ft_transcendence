@@ -36,4 +36,8 @@ export class QueryPropertyDto extends PaginationDto {
     @IsInt()
     @Min(0)
     bedrooms?: number;
+
+    @IsOptional()
+    @IsIn(['newest', 'price_asc', 'price_desc'])
+    sort?: string;
 }
