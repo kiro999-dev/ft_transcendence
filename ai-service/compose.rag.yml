@@ -1,0 +1,14 @@
+services:
+  ai-rag-db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ai_knowledge
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ${AI_RAG_PASSWORD:?Set AI_RAG_PASSWORD}
+    ports:
+      - '127.0.0.1:55432:5432'
+    volumes:
+      - ai_rag_data:/var/lib/postgresql/data
+      - ./database/rag.sql:/docker-entrypoint-initdb.d/01-rag.sql:ro
+volumes:
+  ai_rag_data:

@@ -79,6 +79,69 @@ const Field = ({ name, type, value, label, onChange, disabled, error }: FieldPro
         )}
     </div>
 );
+const API = "http://localhost:3000";
+
+
+const TwoFactorSection = () => {
+    const { accessToken, user, setUser } = useAuth();
+    const [loading, setLoading] = useState(false);
+
+    const enabled = !!user?.two_fa;
+
+    const toggle = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(
+                `${API}/auth/2fa/${enabled ? "disable" : "enable"}`,
+                {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                },
+            );
+            const json = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                const msg = Array.isArray(json.message) ? json.message[0] : json.message;
+                toast.error(msg || "Something went wrong, please try again");
+                return;
+            }
+
+            toast.success(json.message);
+            if (user) setUser({ ...user, two_fa: !enabled });
+        } catch {
+            toast.error("Something went wrong, please try again");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="mt-6 flex items-center justify-between gap-4 border-t border-slate-100 pt-6">
+            <div>
+                <p className="text-sm font-semibold text-slate-900">
+                    Two-factor authentication
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                    {enabled
+                        ? "Enabled. A code is emailed to you at each login."
+                        : "Add an extra layer of security with an email code."}
+                </p>
+            </div>
+
+            <button
+                type="button"
+                disabled={loading}
+                onClick={toggle}
+                className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${enabled
+                    ? "border border-red-200 text-red-600 hover:bg-red-50"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+            >
+                {loading ? "Please wait..." : enabled ? "Disable" : "Enable"}
+            </button>
+        </div>
+    );
+};
 
 export const Profile = () => {
     const { accessToken, isLoading, user, setUser } = useAuth();
@@ -125,7 +188,7 @@ export const Profile = () => {
 
         try {
             console.log(data)
-            const res = await fetch("http://localhost:3000/users/me", {
+            const res = await fetch(`${API}/users/me`, {
                 method: "PATCH",
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
@@ -247,7 +310,7 @@ export const Profile = () => {
                             )}
                         </div>
                     </form>
-
+                    <TwoFactorSection />
                     <div className="mt-6 border-t border-slate-100 pt-6 text-center">
                         <Link
                             to="/change-password"
