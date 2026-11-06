@@ -115,7 +115,10 @@ CREATE TABLE IF NOT EXISTS "leads" (
     "budget" decimal(14,2),
     "notes" text,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "desired_city" varchar(100),
+    "bedrooms" integer
 );
 
 -- 11. إعدادات الذكاء الاصطناعي (AI Settings)
