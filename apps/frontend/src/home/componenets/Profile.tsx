@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Loading } from "../../auth/ProtectedRout";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { apiFetch } from "../../lib/api";
 
 interface ProfileData {
     firstName: string;
@@ -58,6 +59,7 @@ const Field = ({ name, type, value, label, onChange, disabled, error }: FieldPro
         </label>
 
         <input
+            maxLength={30}
             disabled={disabled}
             id={name}
             name={name}
@@ -79,9 +81,6 @@ const Field = ({ name, type, value, label, onChange, disabled, error }: FieldPro
         )}
     </div>
 );
-const API = "http://localhost:3000";
-
-
 const TwoFactorSection = () => {
     const { accessToken, user, setUser } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -91,8 +90,8 @@ const TwoFactorSection = () => {
     const toggle = async () => {
         setLoading(true);
         try {
-            const res = await fetch(
-                `${API}/auth/2fa/${enabled ? "disable" : "enable"}`,
+            const res = await apiFetch(
+                `/auth/2fa/${enabled ? "disable" : "enable"}`,
                 {
                     method: "POST",
                     headers: { Authorization: `Bearer ${accessToken}` },
@@ -172,7 +171,7 @@ export const Profile = () => {
         setSaved(false);
     };
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const newErrors = validate(data);
@@ -188,7 +187,7 @@ export const Profile = () => {
 
         try {
             console.log(data)
-            const res = await fetch(`${API}/users/me`, {
+            const res = await apiFetch("/users/me", {
                 method: "PATCH",
                 headers: {
                     Authorization: `Bearer ${accessToken}`,

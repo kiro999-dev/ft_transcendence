@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext"
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
 interface Credentials {
   email: string;
   password: string;
@@ -51,7 +52,7 @@ interface InputProps {
   );
 };
 export const fetchMe = async (accessToken: string) => {
-  const res = await fetch("http://localhost:3000/users/me", {
+  const res = await apiFetch("/users/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   return res.json();
@@ -77,7 +78,7 @@ export const Login = () => {
   const handleSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
   e.preventDefault();
   try {
-    const response = await fetch("http://localhost:3000/auth/login", {
+    const response = await apiFetch("/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
