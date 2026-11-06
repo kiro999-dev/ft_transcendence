@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../auth/AuthContext";
+import { apiFetch } from "../../lib/api";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -44,8 +45,6 @@ const roleBadgeStyle: Record<Role, string> = {
   moderator: "bg-amber-50 text-amber-700",
   staff: "bg-slate-100 text-slate-600",
 };
-
-const API_BASE = "http://localhost:3000";
 
 /* ------------------------------------------------------------------ */
 /* Small shared pieces                                                 */
@@ -118,7 +117,7 @@ const OrganizationNameCard = ({
 
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/organization/us`, {
+      const res = await apiFetch("/organization/us", {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -253,7 +252,7 @@ const AddMemberModal = ({
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE}/organization/users`, {
+      const res = await apiFetch("/organization/users", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -464,7 +463,7 @@ const TeamMembersCard = ({
 
   const handleRoleChange = async (member: OrgMember, role: Role) => {
     try {
-      const res = await fetch(`${API_BASE}/organization/users/${member.id}/role`, {
+      const res = await apiFetch(`/organization/users/${member.id}/role`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -493,7 +492,7 @@ const TeamMembersCard = ({
 
     setRemovingId(member.id);
     try {
-      const res = await fetch(`${API_BASE}/organization/users/${member.id}`, {
+      const res = await apiFetch(`/organization/users/${member.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -612,10 +611,10 @@ export const OrgSettings = () => {
     const load = async () => {
       try {
         const [orgRes, membersRes] = await Promise.all([
-          fetch(`${API_BASE}/organization/us`, {
+          apiFetch("/organization/us", {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
-          fetch(`${API_BASE}/organization/users`, {
+          apiFetch("/organization/users", {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ]);

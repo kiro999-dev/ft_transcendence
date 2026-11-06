@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 export class UpdateProfileDto {
 
-    @MaxLength(100)
+    @MaxLength(30)
     @IsString()
     @MinLength(2)
     @IsNotEmpty()
@@ -17,7 +17,7 @@ export class UpdateProfileDto {
     })
     firstName?: string;
 
-    @MaxLength(100)
+    @MaxLength(30)
     @IsString()
     @MinLength(2)
     @IsNotEmpty()
