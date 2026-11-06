@@ -3,6 +3,7 @@ import { MdOutlineMarkEmailUnread } from "react-icons/md";
 import { Link } from "react-router-dom";
 
 import toast from "react-hot-toast";
+import { apiFetch } from "../lib/api";
 
 
 
@@ -24,7 +25,7 @@ export const ForgotPassword = () => {
     e.preventDefault();
     const forgotPassword = async () => {
       try {
-        const res = await fetch("http://localhost:3000/auth/forgot-password", {
+        const res = await apiFetch("/auth/forgot-password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
