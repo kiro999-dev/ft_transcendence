@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api";
 const API_BASE = "http://localhost:3000";
 
 export type LeadStatus = "New" | "Contacted" | "Interested" | "Visit Scheduled" | "Closed" | "Lost";
@@ -27,7 +28,7 @@ export type Lead = {
 
 
 export async function fetchLeads(token: string): Promise<Lead[]> {
-  const res = await fetch(`${API_BASE}/leads`, {
+  const res = await apiFetch(`${API_BASE}/leads`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to load leads");
@@ -36,7 +37,7 @@ export async function fetchLeads(token: string): Promise<Lead[]> {
 
 
 export async function createLead(data: Partial<Lead>, token: string): Promise<Lead> {
-  const res = await fetch(`${API_BASE}/leads`, {
+  const res = await apiFetch(`${API_BASE}/leads`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +50,7 @@ export async function createLead(data: Partial<Lead>, token: string): Promise<Le
 }
 
 export async function updateLead(id: string, data: Partial<Lead>, token: string): Promise<Lead> {
-  const res = await fetch(`${API_BASE}/leads/${id}`, {
+  const res = await apiFetch(`${API_BASE}/leads/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
