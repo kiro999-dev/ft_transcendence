@@ -102,7 +102,7 @@ export class AuthService {
   }
   async changePassword(chpassdata: changePasswordDto, userId: string) {
     const user = await this.userService.findUserbyId(userId);
-    if (!user) throw new UnauthorizedException('there is no user with this id');
+    if (!user) throw new NotFoundException('there is no user with this id');
     const isMatch = await bcrypt.compare(
       chpassdata.OldPassword,
       user.password_hash,
