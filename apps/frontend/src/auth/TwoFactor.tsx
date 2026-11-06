@@ -2,15 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext";
+import { apiFetch } from "../lib/api";
 
 export const fetchMe = async (accessToken: string) => {
-  const res = await fetch("http://localhost:3000/users/me", {
+  const res = await apiFetch("/users/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   return res.json();
 };
-
-const API = "http://localhost:3000";
 const COOLDOWN = 10;
 
 export const TwoFactor = () => {
@@ -49,7 +48,7 @@ export const TwoFactor = () => {
     if (code.length !== 6) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/auth/2fa/verify`, {
+      const res = await apiFetch("/auth/2fa/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // so the refresh cookie is accepted
@@ -81,7 +80,7 @@ export const TwoFactor = () => {
 
   const handleResend = async () => {
     try {
-      const res = await fetch(`${API}/auth/2fa/resend`, {
+      const res = await apiFetch("/auth/2fa/resend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tempToken }),

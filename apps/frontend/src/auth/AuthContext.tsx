@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import toast from "react-hot-toast";
+import { apiFetch } from "../lib/api";
 
 type User = {
   two_fa?:boolean
@@ -34,13 +35,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const refreshResponse = await fetch(
-          "http://localhost:3000/auth/refresh",
-          {
-            method: "POST",
-            credentials: "include",
-          }
-        );
+        const refreshResponse = await apiFetch("/auth/refresh", {
+          method: "POST",
+          credentials: "include",
+        });
 
         if (!refreshResponse.ok) {
           setUser(null);
@@ -52,15 +50,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         setAccessToken(newAccessToken);
 
-
-        const userResponse = await fetch(
-          "http://localhost:3000/users/me",
-          {
-            headers: {
-              Authorization: `Bearer ${newAccessToken}`,
-            },
-          }
-        );
+        const userResponse = await apiFetch("/users/me", {
+          headers: {
+            Authorization: `Bearer ${newAccessToken}`,
+          },
+        });
 
         if (!userResponse.ok) {
           setUser(null);
@@ -84,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await fetch("http://localhost:3000/auth/logout", {
+      await apiFetch("/auth/logout", {
         method: "POST",
         credentials: "include",
         headers: {

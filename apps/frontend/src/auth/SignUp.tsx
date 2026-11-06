@@ -2,6 +2,7 @@ import { useState } from "react";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
 
 interface SignUpData {
   organizationName: string;
@@ -217,7 +218,7 @@ export const SignUp = () => {
       organizationName: normalizeOrganizationName(formData.organizationName),
     };
     try {
-      const response = await fetch("http://localhost:3000/auth/sign-up", {
+    const response = await apiFetch("/auth/sign-up", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
