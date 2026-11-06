@@ -9,6 +9,10 @@ import { AddLeadModal } from "./components/AddLeadModal";
 import { useAuth } from "../../auth/AuthContext";
 import { fetchLeads } from "../../services/crmService";
 import type { Lead } from "../../services/crmService";
+import { exampleLeads } from "./exampleLeads";
+
+
+const SHOW_EXAMPLES = true;
 
 export function Crm() {
   const { accessToken } = useAuth();
@@ -21,7 +25,7 @@ export function Crm() {
     async function loadLeads(token: string) {
       try {
         const data = await fetchLeads(token);
-        setLeads(data);
+        setLeads(SHOW_EXAMPLES ? [...data, ...exampleLeads] : data);
       } catch {
         setError("Could not load your leads. Is the backend running?");
       }

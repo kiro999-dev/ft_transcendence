@@ -6,10 +6,8 @@ const STATUSES = ['New', 'Contacted', 'Interested', 'Visit Scheduled', 'Closed',
 
 const WITH_DETAILS = {
   visitors: true,
-  properties: true,
   property_matches: { include: { properties: true } },
 } as const;
-
 
 function isText(value: any) {
   return typeof value === 'string' && value.trim() !== '';
@@ -37,17 +35,15 @@ export class LeadsService {
 
   private formatLead(lead: any) {
     const visitor = lead.visitors;
-    const property = lead.properties;
     return {
       id: lead.id,
       name: visitor.name ?? '',
       email: visitor.email ?? '',
       phone: visitor.phone ?? '',
-      city: lead.desired_city ?? property?.city ?? '',
+      city: lead.desired_city ?? '',
       budget: lead.budget?.toString() ?? '',
-      bedrooms: lead.bedrooms ?? property?.bedrooms ?? '',
+      bedrooms: lead.bedrooms ?? '',
       status: lead.status,
-      score: lead.score ?? '',
       notes: lead.notes ?? '',
       created_at: lead.created_at,
       property_matches: (lead.property_matches ?? []).map((m: any) => ({
