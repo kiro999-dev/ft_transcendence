@@ -5,14 +5,16 @@ import { TokensModule } from '../tokens/tokens.module';
 import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email/email.module';
 import { EmailService } from '../email/email/email.service';
+import { OtpService } from '../otp/otp.service';
 
 @Module({
   imports:[
     TokensModule,
     UsersModule,
-    EmailModule
+    EmailModule,
+    
   ],
   controllers: [AuthController],
-  providers: [AuthService,EmailService]
+  providers: [AuthService,EmailService,OtpService]
 })
 export class AuthModule {}

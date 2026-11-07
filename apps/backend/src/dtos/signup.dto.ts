@@ -21,18 +21,12 @@ export class SignUpDto {
   @IsString()
   @MinLength(2)
   @IsNotEmpty()
-  @Matches(/^\S+$/, {
-    message: 'First name must not contain spaces',
-  })
   firstName: string;
 
   @MaxLength(100)
   @IsString()
   @MinLength(2)
   @IsNotEmpty()
-  @Matches(/^\S+$/, {
-    message: 'Last name must not contain spaces',
-  })
   lastName: string;
 
 

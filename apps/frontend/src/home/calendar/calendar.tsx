@@ -12,7 +12,7 @@ import WeekCalendar, { type Visit } from './WeekCalendar'
 import VisitFlyout from './VisitFlyout'
 import NewVisitModal from './NewVisitModal'
 import VisitsList from './VisitsList'
-import { Sidebar } from "../componenets/Sidebar"
+import { Sidebar } from "../componenets/SideBar"
 import { useAuth } from "../../auth/AuthContext"
 import { Loading } from "../../auth/ProtectedRout"
 

@@ -1,0 +1,46 @@
+name: ft_transcendence
+
+services:
+
+  postgres:
+    container_name: postgres
+    image: postgres:17
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    container_name: backend
+    build:
+      context: ../apps/backend
+      dockerfile: ../../dk/backend.Dockerfile
+    env_file: .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../apps/backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    restart: always
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ../apps/frontend
+      dockerfile: ../../dk/frontend.Dockerfile
+    env_file: .env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../apps/frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  db_data:

@@ -5,39 +5,44 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TokensModule } from './tokens/tokens.module';
 import { EmailModule } from './email/email/email.module';
 import { OrganizationService } from './organization/organization.service';
 import { OrganizationModule } from './organization/organization.module';
 import { BookingModule } from './booking/booking.module';
 import { PropertiesModule } from './properties/properties.module';
+import { LeadsModule } from './leads/leads.module';
+import { OtpService } from './otp/otp.service';
+import { OtpModule } from './otp/otp.module';
 @Module({
   controllers: [AppController],
-  providers: [AppService, OrganizationService],
+  providers: [AppService, OrganizationService, OtpService],
   imports: [
-    AuthModule, 
-    UsersModule, 
+    AuthModule,
+    UsersModule,
     PrismaModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env'
     }),
-   
+
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       global:true,
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('ACCESS_TOKEN_SECRET') 
+        secret: configService.get<string>('ACCESS_TOKEN_SECRET')
       }),
     }),
-   
+
     TokensModule,
     EmailModule,
     OrganizationModule,
     BookingModule,
     PropertiesModule,
+    LeadsModule,
+    OtpModule,
   ],
 })
 export class AppModule {}
