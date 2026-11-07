@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS "organizations" (
 -- 3. جدول المستخدمين (Users)
 CREATE TABLE IF NOT EXISTS "users" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    "organization_id" uuid
-        REFERENCES "organizations" ("id") ON DELETE CASCADE,
+    "organization_id" uuid REFERENCES "organizations" ("id") ON DELETE CASCADE,
     "first_name" varchar(255) NOT NULL,
     "last_name" varchar(255) NOT NULL,
     "email" varchar(255) UNIQUE NOT NULL,
@@ -22,10 +21,17 @@ CREATE TABLE IF NOT EXISTS "users" (
     "token_hash" text,
     "phone" varchar(50),
     "role" varchar(20) NOT NULL DEFAULT 'owner',
-    "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "reset_token" text,
-    "reset_token_expires_at" timestamptz
+    "reset_token_expires_at" timestamptz,
+
+    -- 2FA
+    "two_fa" boolean NOT NULL DEFAULT false,
+    "otp_hash" text,
+    "otp_expires_at" timestamptz,
+    "otp_attempts" integer NOT NULL DEFAULT 0,
+    "otp_last_sent_at" timestamptz
 );
 
 -- 4. جدول العقارات (Properties)
@@ -109,7 +115,10 @@ CREATE TABLE IF NOT EXISTS "leads" (
     "budget" decimal(14,2),
     "notes" text,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "desired_city" varchar(100),
+    "bedrooms" integer
 );
 
 -- 11. إعدادات الذكاء الاصطناعي (AI Settings)

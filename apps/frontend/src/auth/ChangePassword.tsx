@@ -2,6 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "./AuthContext"
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
 
 interface Passwords {
   OldPassword: string;
@@ -107,7 +108,7 @@ export const ChangePassword = () => {
 
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost:3000/auth/change-password", {
+      const res = await apiFetch("/auth/change-password", {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${accessToken}`,

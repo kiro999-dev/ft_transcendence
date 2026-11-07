@@ -26,6 +26,7 @@ export class UsersController {
             phone: user.phone,
             role: user.role,
             organization_id: user.organization_id,
+            two_fa:user.two_fa
         };
     }
      @UseGuards(AuthenticationGuard)
