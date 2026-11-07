@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body, Patch, Delete, Query} from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body } from '@nestjs/common';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -27,8 +27,7 @@ export class PropertiesController {
     }
 
     @Post('')
-    @UseGuards(AuthenticationGuard, AuthorizationGuard)
-    @ROLES('owner', 'moderator')
+    @UseGuards(AuthenticationGuard)
     async create(@Body() dto: CreatePropertyDto, @Req() req: any){
         return this.properties.create(dto, req.user.organizationId);
     }
