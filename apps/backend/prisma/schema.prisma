@@ -221,5 +221,35 @@ model VisitStatusHistory {
   visitId   String   @db.Uuid
   status    String
   changedAt DateTime @default(now()) @db.Timestamp(6)
-  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+}
+
+model WeeklyAvailability {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @db.Uuid
+  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime   String   // "09:00"
+  endTime     String   // "18:00"
+  slotDuration Int     @default(30) // f d-dqayq
+  user        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// 2. Event Types (e.g., "In-Person Visit 30min", "Virtual Tour 15min")
+model EventType {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String   @db.VarChar(255)
+  duration    Int      @default(30)
+  description String?
+  isActive    Boolean  @default(true)
+}
+
+// 3. Notification Settings & Logs
+model NotificationLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  visitId     String   @db.Uuid
+  type        String   @db.VarChar(50) // "EMAIL", "WHATSAPP"
+  recipient   String   @db.VarChar(255)
+  status      String   @default("PENDING") // "SENT", "FAILED"
+  sentAt      DateTime? @db.Timestamp(6)
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
 }
