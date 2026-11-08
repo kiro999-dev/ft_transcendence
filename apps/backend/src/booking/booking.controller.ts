@@ -1,40 +1,38 @@
+import { Body, Controller, Post, Get, Patch, Param, ParseUUIDPipe, UseGuards, Req } from '@nestjs/common';
+import { BookingService } from './booking.service'
 import { GetAvailabilityDto } from '../dtos/availability.dto';
-import { VisitDto } from '../dtos/visit.dto';
 import { AuthenticationGuard } from '../guards/authentication.guard';
-
-import { Controller, Post, Body, Headers, BadRequestException, Get, Req, Patch, Param, UseGuards } from '@nestjs/common';
-import { BookingService } from './booking.service';
+import { VisitDto } from '../dtos/visit.dto';
 import { RescheduleVisitDto } from '../dtos/rescheduleVisit.dto';
 
-@UseGuards(AuthenticationGuard)
-@Controller('internal/ai')
+@Controller('/internal/ai')
 export class BookingController {
     constructor(private readonly bookingService: BookingService) { }
     @Post('availability')
+    @UseGuards(AuthenticationGuard)
     getAvailability(@Body() body: GetAvailabilityDto,@Req() request:any) {
-        const id = request.user.sub;
-        return this.bookingService.getAvailability(body)
+        const organizationId = request.user.organizationId;
+        return this.bookingService.getAvailability(body, organizationId)
     }
-  @Post('visits')
-  create(
-    @Headers('x-organization-id') organizationId: string,
-    @Body() createVisitDto: VisitDto,
-  ) {
-    if (!organizationId) {
-      throw new BadRequestException('X-Organization-Id header is required');
+    @Post('visits')
+    @UseGuards(AuthenticationGuard)
+    createVisit(@Body() body: VisitDto, @Req() request: any) {
+        return this.bookingService.createVisit(body, request.user.organizationId);
     }
-    return this.bookingService.createVisitFromAI(createVisitDto, organizationId);
-  }
-  @Get('visits')
-  getVisits() {
-    return this.bookingService.getVisits();
-  }
-  @Patch('visits/:id/reschedule')
-  reschedule( @Param('id') id: string, @Body() body: RescheduleVisitDto) {
-    return this.bookingService.rescheduleVisit(id, body.starts_at);
-  }
-  @Patch('/visits/:id/cancel')
-  cancel(@Param('id') id: string) {
-    return this.bookingService.cancelVisit(id);
-  }
+    @Get('visits')
+    @UseGuards(AuthenticationGuard)
+    getVisits(@Req() request: any) {
+        return this.bookingService.getVisits(request.user.organizationId);
+    }
+    @Patch('visits/:id/reschedule')
+    @UseGuards(AuthenticationGuard)
+    reschedule(@Param('id', ParseUUIDPipe) id: string, @Body() body: RescheduleVisitDto, @Req() request: any) {
+        return this.bookingService.rescheduleVisit(id, body.starts_at, request.user);
+    }
+    @Patch('visits/:id/cancel')
+    @UseGuards(AuthenticationGuard)
+    cancel(@Param('id', ParseUUIDPipe) id: string, @Req() request: any) {
+        return this.bookingService.cancelVisit(id, request.user);
+    }
+
 }
