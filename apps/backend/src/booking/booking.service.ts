@@ -6,7 +6,9 @@ import { GetAvailabilityDto } from '../dtos/availability.dto';
 export class BookingService {
   constructor(private readonly prisma: PrismaService) { }
   async getAvailability(data: GetAvailabilityDto) {
-    const property = await this.prisma.properties.findUnique({
+    const prisma = this.prisma as any;
+
+    const property = await prisma.properties.findUnique({
       where: {
         id: data.property_id
       }
@@ -15,7 +17,7 @@ export class BookingService {
     if (!property) {
       throw new NotFoundException(`Property with ID ${data.property_id} not found`);
     }
-    const agent = await this.prisma.users.findFirst({
+    const agent = await prisma.users.findFirst({
       where: {
         organization_id: property.organization_id,
         role: 'owner'
@@ -26,7 +28,7 @@ export class BookingService {
     }
     const startOfDay = new Date(`${data.preferred_date}T00:00:00.000Z`);
     const endOfDay = new Date(`${data.preferred_date}T23:59:59.999Z`);
-    const agentAvailability = await this.prisma.agentAvailability.findMany({
+    const agentAvailability = await prisma.AgentAvailability.findMany({
       where: {
         userId: agent.id,
         startTime: {
@@ -35,7 +37,7 @@ export class BookingService {
         }
       }
     })
-    const exceptionSlots = await this.prisma.calendarException.findMany({
+    const exceptionSlots = await prisma.CalendarException.findMany({
       where: {
         userId: agent.id,
         startTime: {
@@ -44,7 +46,7 @@ export class BookingService {
         }
       }
     })
-    const isvisit = await this.prisma.visit.findMany({
+    const isvisit = await prisma.Visit.findMany({
       where: {
         userId: agent.id,
         startAt: {
@@ -63,13 +65,13 @@ export class BookingService {
 
     for (let i = 0; i < agentAvailability.length; i++) {
       const slot = agentAvailability[i]
-      const exception = exceptionSlots.find(exc =>
+      const exception = exceptionSlots.find((exc: any) =>
         slot.startTime < exc.endTime && slot.endTime > exc.startTime
       )
       if (exception) {
         continue
       }
-      const visit = isvisit.find(vis =>
+      const visit = isvisit.find((vis: any) =>
         slot.startTime < vis.endAt && slot.endTime > vis.startAt
       )
       if (visit) {
