@@ -116,7 +116,6 @@ CREATE TABLE IF NOT EXISTS "leads" (
     "notes" text,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "desired_city" varchar(100),
     "bedrooms" integer
 );
