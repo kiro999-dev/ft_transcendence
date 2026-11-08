@@ -23,7 +23,7 @@ export class BookingService {
     if (!property) {
       throw new NotFoundException(`Property with ID ${data.property_id} not found`);
     }
-    const agent = await this.prisma.users.findFirst({
+    const agent = await prisma.users.findFirst({
       where: {
         organization_id: property.organization_id,
         role: 'owner'
@@ -42,14 +42,14 @@ export class BookingService {
         }
       }
     })
-    const exceptionSlots = await this.prisma.calendarException.findMany({
+    const exceptionSlots = await prisma.CalendarException.findMany({
       where: {
         userId: agent.id,
         startTime: { lt: endOfDay },
         endTime: { gt: startOfDay },
       }
     })
-    const isvisit = await this.prisma.visit.findMany({
+    const isvisit = await prisma.Visit.findMany({
       where: {
         userId: agent.id,
         startAt: { lt: endOfDay },
@@ -66,13 +66,13 @@ export class BookingService {
 
     for (let i = 0; i < agentAvailability.length; i++) {
       const slot = agentAvailability[i]
-      const exception = exceptionSlots.find(exc =>
+      const exception = exceptionSlots.find((exc: any) =>
         slot.startTime < exc.endTime && slot.endTime > exc.startTime
       )
       if (exception) {
         continue
       }
-      const visit = isvisit.find(vis =>
+      const visit = isvisit.find((vis: any) =>
         slot.startTime < vis.endAt && slot.endTime > vis.startAt
       )
       if (visit) {

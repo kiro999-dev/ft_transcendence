@@ -1,7 +1,6 @@
 import {
   IsString,
   IsEmail,
-  IsPhoneNumber,
   MinLength,
   Matches,
   MaxLength,
@@ -52,9 +51,10 @@ export class SignUpDto {
   password: string;
 
 
-  @Matches(/^\+?[1-9]\d{7,14}$/, {
-    message: 'Phone number must contain only digits, optionally starting with +',
+  @Matches(/^[+()\d\s.-]{7,20}$/, {
+    message: 'Phone number must be a valid international or local number',
   })
-  @IsPhoneNumber()
+  @IsString()
+  @IsNotEmpty()
   phone: string;
 }
