@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException ,ForbiddenException} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetAvailabilityDto } from '../dtos/availability.dto';
 import { VisitDto } from '../dtos/visit.dto';
@@ -22,7 +22,6 @@ export class BookingService {
     if (!property) {
       throw new NotFoundException(`Property with ID ${data.property_id} not found`);
     }
-
     const agent = await this.prisma.users.findFirst({
       where: {
         organization_id: property.organization_id,
@@ -251,61 +250,59 @@ for (const rule of rules) {
     });
   }
 
-  async getVisits() {
-    return this.prisma.visit.findMany({});
-  }
 
-  async rescheduleVisit(id: string, startsAt: string) {
-    const check_id = await this.prisma.visit.findUnique({ where: { id } });
-    if (!check_id) {
-      throw new NotFoundException('Visit not found for the given ID');
-    }
-    const startDate = new Date(startsAt);
-    const endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
-    const existingConflict = await this.prisma.visit.findFirst({
-      where: {
-        id: { not: id },
-        status: { notIn: ['CANCELLED', 'cancelled'] },
-        OR: [
-          { userId: check_id.userId },
-          { property_id: check_id.property_id },
-        ],
-        AND: [
-          { startAt: { lt: endDate } },
-          { endAt: { gt: startDate } },
-        ],
-      },
-    });
-    if (existingConflict) {
-      throw new ConflictException({
-        error: 'SLOT_UNAVAILABLE',
-        message: 'This time slot is no longer available.',
-      });
-    }
-    return this.prisma.visit.update({
-      where: { id },
-      data: {
-        startAt: startDate,
-        endAt: endDate,
-        date_of_visit: startDate,
-        status: 'confirmed',
+
+  async getVisits(organizationId: string) {
+    if (!organizationId) throw new NotFoundException('Organization not found');
+    return this.prisma.visit.findMany({
+      where: { properties: { organization_id: organizationId } },
+      include: {
+        leads: true,
+        properties: true,
+        // Never return the user's password or tokens.
+        users: { select: { id: true, first_name: true, last_name: true } },
       },
     });
   }
 
-  async cancelVisit(id: string) {
-    const check_id = await this.prisma.visit.findUnique({ where: { id } });
-    if (!check_id) {
-      throw new NotFoundException('Visit not found for the given ID');
-    }
-    if (check_id.status === 'cancelled') {
-      throw new BadRequestException('Visit is already cancelled');
-    }
-    return this.prisma.visit.update({
-      where: { id },
-      data: {
-        status: 'cancelled',
-      },
+  async rescheduleVisit(id: string, startsAt: string, caller: { sub: string; organizationId: string; role: string }) {
+    if (!caller?.organizationId) throw new NotFoundException('Visit not found');
+    const current = await this.prisma.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
+    if (!current) throw new NotFoundException('Visit not found');
+    if (caller.role !== 'owner' && caller.sub !== current.userId) throw new ForbiddenException('Not allowed to manage this visit');
+    if (!/(Z|[+-]\d{2}:\d{2})$/.test(startsAt)) throw new BadRequestException('starts_at must include a timezone');
+    const start = new Date(startsAt);
+    if (Number.isNaN(start.getTime()) || start <= new Date()) throw new BadRequestException('Visit must be in the future');
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${current.userId}))::text`;
+      const visit = await tx.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
+      if (!visit) throw new NotFoundException('Visit not found');
+      if (visit.status.toUpperCase() === 'CANCELLED') throw new BadRequestException('Cancelled visits cannot be rescheduled');
+      const slot = await tx.agentAvailability.findFirst({ where: { userId: visit.userId, startTime: start } });
+      if (!slot || slot.endTime <= start) throw new ConflictException({ error: 'SLOT_UNAVAILABLE', message: 'This time slot is no longer available.' });
+      const blocked = await tx.calendarException.findFirst({ where: { userId: visit.userId, startTime: { lt: slot.endTime }, endTime: { gt: start } } });
+      const conflict = await tx.visit.findFirst({ where: { id: { not: id }, userId: visit.userId,
+        startAt: { lt: slot.endTime }, endAt: { gt: start }, status: { notIn: ['CANCELLED', 'cancelled'] } } });
+      if (blocked || conflict) throw new ConflictException({ error: 'SLOT_UNAVAILABLE', message: 'This time slot is no longer available.' });
+      const updated = await tx.visit.update({ where: { id }, data: { startAt: start, endAt: slot.endTime, date_of_visit: start, status: 'CONFIRMED' } });
+      await tx.visitStatusHistory.create({ data: { visitId: id, status: 'RESCHEDULED' } });
+      return updated;
+    });
+  }
+
+  async cancelVisit(id: string, caller: { sub: string; organizationId: string; role: string }) {
+    if (!caller?.organizationId) throw new NotFoundException('Visit not found');
+    const current = await this.prisma.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
+    if (!current) throw new NotFoundException('Visit not found');
+    if (caller.role !== 'owner' && caller.sub !== current.userId) throw new ForbiddenException('Not allowed to manage this visit');
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${current.userId}))::text`;
+      const visit = await tx.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
+      if (!visit) throw new NotFoundException('Visit not found');
+      if (visit.status.toUpperCase() === 'CANCELLED') throw new BadRequestException('Visit is already cancelled');
+      const updated = await tx.visit.update({ where: { id }, data: { status: 'CANCELLED' } });
+      await tx.visitStatusHistory.create({ data: { visitId: id, status: 'CANCELLED' } });
+      return updated;
     });
   }
 }
