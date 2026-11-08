@@ -11,7 +11,9 @@ export class BookingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAvailability(data: GetAvailabilityDto) {
-    const property = await this.prisma.properties.findUnique({
+    const prisma = this.prisma as any;
+
+    const property = await prisma.properties.findUnique({
       where: {
         id: data.property_id,
       },
