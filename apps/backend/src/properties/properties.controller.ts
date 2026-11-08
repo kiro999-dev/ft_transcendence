@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Param, ParseUUIDPipe, Post, Body } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Patch, Query, Delete, Param, ParseUUIDPipe, Post, Body } from '@nestjs/common';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
