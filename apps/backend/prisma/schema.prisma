@@ -215,6 +215,7 @@ model Visit {
   properties     properties          @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   leads          leads               @relation(fields: [leadId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   visitStatusHistory VisitStatusHistory[]
+  NotificationLog NotificationLog[]
 }
 
 model VisitStatusHistory {
@@ -253,18 +254,4 @@ model NotificationLog {
   status      String   @default("PENDING") // "SENT", "FAILED"
   sentAt      DateTime? @db.Timestamp(6)
   visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
-}
-model property_matches {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organization_id String        @db.Uuid
-  lead_id         String        @db.Uuid
-  property_id     String        @db.Uuid
-  match_score     Decimal?      @db.Decimal(5, 2)
-  reason          String?
-  created_at      DateTime      @default(now()) @db.Timestamp(6)
-  leads           leads         @relation(fields: [lead_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  properties      properties    @relation(fields: [property_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([lead_id, property_id])
 }

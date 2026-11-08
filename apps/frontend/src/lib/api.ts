@@ -1,5 +1,5 @@
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/+$/, "");
 // The token lives in memory, not localStorage.
 let accessToken: string | null = null;
 

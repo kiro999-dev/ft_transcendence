@@ -23,7 +23,7 @@ export class BookingService {
     if (!property) {
       throw new NotFoundException(`Property with ID ${data.property_id} not found`);
     }
-    const agent = await prisma.users.findFirst({
+    const agent = await this.prisma.users.findFirst({
       where: {
         organization_id: property.organization_id,
         role: 'owner'
@@ -42,14 +42,14 @@ export class BookingService {
         }
       }
     })
-    const exceptionSlots = await prisma.CalendarException.findMany({
+    const exceptionSlots = await this.prisma.calendarException.findMany({
       where: {
         userId: agent.id,
         startTime: { lt: endOfDay },
         endTime: { gt: startOfDay },
       }
     })
-    const isvisit = await prisma.Visit.findMany({
+    const isvisit = await this.prisma.visit.findMany({
       where: {
         userId: agent.id,
         startAt: { lt: endOfDay },
@@ -153,12 +153,12 @@ export class BookingService {
   async getVisits(organizationId: string) {
     if (!organizationId) throw new NotFoundException('Organization not found');
     return this.prisma.visit.findMany({
-      where: { property: { organization_id: organizationId } },
+      where: { properties: { organization_id: organizationId } },
       include: {
-        lead: true,
-        property: true,
+        leads: true,
+        properties: true,
         // Never return the user's password or tokens.
-        user: { select: { id: true, first_name: true, last_name: true } },
+        users: { select: { id: true, first_name: true, last_name: true } },
       },
       orderBy: { startAt: 'asc' },
     });
@@ -166,7 +166,7 @@ export class BookingService {
 
   async rescheduleVisit(id: string, startsAt: string, caller: { sub: string; organizationId: string; role: string }) {
     if (!caller?.organizationId) throw new NotFoundException('Visit not found');
-    const current = await this.prisma.visit.findFirst({ where: { id, property: { organization_id: caller.organizationId } } });
+    const current = await this.prisma.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
     if (!current) throw new NotFoundException('Visit not found');
     if (caller.role !== 'owner' && caller.sub !== current.userId) throw new ForbiddenException('Not allowed to manage this visit');
     if (!/(Z|[+-]\d{2}:\d{2})$/.test(startsAt)) throw new BadRequestException('starts_at must include a timezone');
@@ -174,7 +174,7 @@ export class BookingService {
     if (Number.isNaN(start.getTime()) || start <= new Date()) throw new BadRequestException('Visit must be in the future');
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${current.userId}))::text`;
-      const visit = await tx.visit.findFirst({ where: { id, property: { organization_id: caller.organizationId } } });
+      const visit = await tx.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
       if (!visit) throw new NotFoundException('Visit not found');
       if (visit.status.toUpperCase() === 'CANCELLED') throw new BadRequestException('Cancelled visits cannot be rescheduled');
       const slot = await tx.agentAvailability.findFirst({ where: { userId: visit.userId, startTime: start } });
@@ -191,12 +191,12 @@ export class BookingService {
 
   async cancelVisit(id: string, caller: { sub: string; organizationId: string; role: string }) {
     if (!caller?.organizationId) throw new NotFoundException('Visit not found');
-    const current = await this.prisma.visit.findFirst({ where: { id, property: { organization_id: caller.organizationId } } });
+    const current = await this.prisma.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
     if (!current) throw new NotFoundException('Visit not found');
     if (caller.role !== 'owner' && caller.sub !== current.userId) throw new ForbiddenException('Not allowed to manage this visit');
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${current.userId}))::text`;
-      const visit = await tx.visit.findFirst({ where: { id, property: { organization_id: caller.organizationId } } });
+      const visit = await tx.visit.findFirst({ where: { id, properties: { organization_id: caller.organizationId } } });
       if (!visit) throw new NotFoundException('Visit not found');
       if (visit.status.toUpperCase() === 'CANCELLED') throw new BadRequestException('Visit is already cancelled');
       const updated = await tx.visit.update({ where: { id }, data: { status: 'CANCELLED' } });
