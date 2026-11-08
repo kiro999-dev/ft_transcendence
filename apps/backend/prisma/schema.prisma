@@ -190,10 +190,6 @@ model Visit {
   property           properties           @relation(fields: [property_id], references: [id], onDelete: Cascade)
   user               users                @relation(fields: [userId], references: [id], onDelete: Cascade)
   VisitStatusHistory VisitStatusHistory[]
-
-  user     users      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  property properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  lead     leads      @relation(fields: [leadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model CalendarException {
@@ -212,8 +208,6 @@ model VisitStatusHistory {
   changedAt DateTime @default(now()) @db.Timestamp(6)
 
   @@unique([lead_id, property_id])
-}
-  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
 }
 
 model WeeklyAvailability {
