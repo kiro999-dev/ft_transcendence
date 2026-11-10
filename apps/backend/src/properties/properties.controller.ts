@@ -28,6 +28,7 @@ export class PropertiesController {
 
     @Post('')
     @UseGuards(AuthenticationGuard)
+    @ROLES('owner', 'moderator')
     async create(@Body() dto: CreatePropertyDto, @Req() req: any){
         return this.properties.create(dto, req.user.organizationId);
     }
