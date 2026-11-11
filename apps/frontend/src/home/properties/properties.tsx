@@ -15,6 +15,11 @@ export const Properties = () => {
         <div>
             <h1>Properties</h1>
             <p>Total: {properties.length}</p>
+            <ul>
+                {properties.map((p) => (
+                    <li key={p.id}>{p.title}</li>
+                ))}
+            </ul>
         </div>
     );
 };
