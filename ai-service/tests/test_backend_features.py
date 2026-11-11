@@ -62,49 +62,19 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.json()['status'], 'demo')
         self.assertEqual(second.status_code, 409)
 
-    async def test_whatsapp_text_reply_and_moderation(self):
-        from app.message_analysis import MessageAnalysis
+    async def test_whatsapp_text_reply(self):
         payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'body': 'Hello'}}
-        analysis = MessageAnalysis(sentiment='neutral', sentiment_reason='Question', inappropriate=False, moderation_reason='None')
         with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)), \
              patch('app.whatsapp.chat_with_tools', new=AsyncMock(return_value=ChatResult(reply='Hello!'))), \
              patch('app.whatsapp.send_text', new=AsyncMock()) as send:
             response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
         self.assertEqual(response.json()['status'], 'replied')
         send.assert_awaited_once_with('demo', '123@c.us', 'Hello!')
 
-    async def test_audio_url_rejects_other_hosts(self):
-        from app.whatsapp import download_audio
-        with patch.dict(os.environ, {'WAHA_URL': 'http://waha:3000'}):
-            with self.assertRaises(ValueError):
-                await download_audio('http://other:3000/file', 'audio/ogg')
-
-    async def test_whatsapp_voice_uses_transcription(self):
-        from app.message_analysis import MessageAnalysis
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us',
-                   'media': {'url': 'http://waha:3000/audio', 'mimetype': 'audio/ogg'}}}
-        analysis = MessageAnalysis(sentiment='neutral', sentiment_reason='Question', inappropriate=False, moderation_reason='None')
+    async def test_whatsapp_ignores_media(self):
+        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'hasMedia': True}}
         with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.download_audio', new=AsyncMock(return_value=b'audio')), \
-             patch('app.whatsapp.transcribe', new=AsyncMock(return_value='Hello from voice')), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)) as analyze, \
-             patch('app.whatsapp.chat_with_tools', new=AsyncMock(return_value=ChatResult(reply='Hello'))), \
              patch('app.whatsapp.send_text', new=AsyncMock()) as send:
             response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
-        self.assertEqual(response.json()['status'], 'replied')
-        analyze.assert_awaited_once_with('Hello from voice')
-        send.assert_awaited_once()
-
-    async def test_whatsapp_warns_on_abuse(self):
-        from app.message_analysis import MessageAnalysis
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'body': 'Bad message'}}
-        analysis = MessageAnalysis(sentiment='negative', sentiment_reason='Abusive', inappropriate=True, moderation_reason='Abuse')
-        with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)), \
-             patch('app.whatsapp.chat_with_tools', new=AsyncMock()) as chat, \
-             patch('app.whatsapp.send_text', new=AsyncMock()) as send:
-            response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
-        self.assertEqual(response.json()['status'], 'moderated')
-        chat.assert_not_awaited()
-        send.assert_awaited_once()
+        self.assertEqual(response.json()['status'], 'ignored')
+        send.assert_not_awaited()
