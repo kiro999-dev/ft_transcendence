@@ -15,7 +15,7 @@ import { ChangePassword } from "./auth/ChangePassword";
 import { Crm } from "./home/crm/crm";
 import { OrgSettings } from "./home/componenets/OrganizationSettings";
 import { TwoFactor } from "./auth/TwoFactor";
-// import { Properties } from "./home/properties/properties";
+import { Properties } from "./home/properties/properties";
 
 function App() {
 
