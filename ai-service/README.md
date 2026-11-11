@@ -153,14 +153,6 @@ not save them: the caller must keep and resend them. A request can include up to
 This is not persistent conversation storage. `/chat` waits for the complete
 answer; `/chat/stream` streams Gemini text and tool results as described below.
 
-## Message analysis
-
-`POST /analyze` accepts `{"message": "I am frustrated"}` and asks Gemini for
-positive/neutral/negative sentiment, short reasons, and an inappropriate-content
-flag. This is a separate endpoint: it does not automatically moderate `/chat`,
-store results, or send them to CRM. The result is an estimate for an agent to
-review, not a final decision. Gemini errors return 503.
-
 ## Streaming chat
 
 `POST /chat/stream` accepts the same JSON as `/chat` and returns server-sent
@@ -205,7 +197,7 @@ needed. The shared token protects all conversations equally; it does not yet
 provide per-user/agency authorization. Concurrent messages to one conversation
 are not serialized, so send them one at a time.
 
-Chat, streaming, analysis, knowledge and conversation requests have a simple
+Chat, streaming, knowledge and conversation requests have a simple
 per-process limit (default 30 per minute per client IP). Change it with
 `AI_REQUESTS_PER_MINUTE`. It is for development: multiple workers have separate
 counters and a proxy may make all users share an IP.
@@ -267,19 +259,12 @@ the knowledge tool when `RAG_ENABLED=true`. Only upload trusted agency
 information: this basic version accepts text and does not provide a document
 management UI or tenant-level filtering.
 
-### WhatsApp text and voice
+### WhatsApp text (optional later)
 
-Set `WAHA_URL`, `WAHA_API_KEY`, `WAHA_SESSION`, and `WAHA_WEBHOOK_SECRET` in the
-server environment. Configure the WAHA `message` webhook to send requests to
-`/whatsapp/webhook` with the custom `X-Webhook-Secret` header. Configure WAHA to
-make its downloaded media accessible on the exact `WAHA_URL` origin. The AI
-accepts only that session and direct messages; it ignores outgoing messages and
-other events. It downloads supported audio from that same origin (up to 10 MB),
-asks Gemini to transcribe it, and sends a text reply. Inappropriate messages
-receive a warning. It stores text conversation history in the AI SQLite store.
-
-The webhook must be tested with the team's actual WAHA version and network
-configuration. It does not yet deduplicate webhook retries or guarantee message
-ordering; a timeout after sending can cause duplicate replies if WAHA retries.
-Sentiment is calculated but is not persisted to CRM. No QR/settings UI is
-included. Gemini and WAHA availability are required for real voice testing.
+The text webhook is kept for future integration, but has not been tested with a
+real WAHA session. It requires `WAHA_URL`, `WAHA_API_KEY`, `WAHA_SESSION`, and
+`WAHA_WEBHOOK_SECRET`. Configure the `message` webhook to call
+`/whatsapp/webhook` with `X-Webhook-Secret`. The adapter ignores media and only
+responds to direct text messages. Voice, sentiment and moderation are deferred.
+It does not deduplicate retries or guarantee ordering. Do not expose it to real
+customers before testing those behaviors and the team's authorization setup.
