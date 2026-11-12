@@ -1,47 +1,115 @@
 name: ft_transcendence
 
 services:
-
   postgres:
     container_name: postgres
     image: postgres:17
     env_file: .env
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ../database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
-    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  db-init:
+    image: ft_transcendence-backend
+    build:
+      context: ../apps/backend
+      dockerfile: ../../dk/backend.Dockerfile
+    env_file: .env
+    command: ["sh", "-c", "bunx prisma db push --skip-generate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   backend:
     container_name: backend
+    image: ft_transcendence-backend
     build:
       context: ../apps/backend
       dockerfile: ../../dk/backend.Dockerfile
     env_file: .env
     ports:
       - "3000:3000"
-    volumes:
-      - ../apps/backend:/app
-      - /app/node_modules
     depends_on:
-      - postgres
-    restart: always
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
 
   frontend:
     container_name: frontend
     build:
       context: ../apps/frontend
       dockerfile: ../../dk/frontend.Dockerfile
-    env_file: .env
     ports:
       - "5173:5173"
-    volumes:
-      - ../apps/frontend:/app
-      - /app/node_modules
     depends_on:
-      - backend
-    restart: always
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ai-service:
+    container_name: ai-service
+    image: ai-service
+    build: ../ai-service
+    env_file: .env
+    environment:
+      BACKEND_URL: http://backend:3000
+      PROPERTY_SOURCE: backend
+      BOOKING_ENABLED: "true"
+      AI_DATABASE_PATH: /app/data/conversations.db
+      WAHA_URL: http://waha:3000
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ai_service_data:/app/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  waha:
+    container_name: waha
+    image: ${WAHA_IMAGE:-devlikeapro/waha:latest}
+    environment:
+      WAHA_API_KEY: ${WAHA_API_KEY:?Run make setup}
+      WAHA_DASHBOARD_USERNAME: ${WAHA_DASHBOARD_USERNAME:-admin}
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD:?Run make setup}
+      WHATSAPP_SWAGGER_USERNAME: ${WAHA_DASHBOARD_USERNAME:-admin}
+      WHATSAPP_SWAGGER_PASSWORD: ${WAHA_DASHBOARD_PASSWORD:?Run make setup}
+      WHATSAPP_DEFAULT_ENGINE: WEBJS
+      WHATSAPP_START_SESSION: ${WAHA_SESSION:-default}
+      WAHA_PRINT_QR: "False"
+      WHATSAPP_HOOK_URL: http://ai-service:8000/whatsapp/webhook
+      WHATSAPP_HOOK_EVENTS: message
+      WHATSAPP_HOOK_CUSTOM_HEADERS: X-Webhook-Secret:${WAHA_WEBHOOK_SECRET:?Run make setup}
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - waha_sessions:/app/.sessions
+    depends_on:
+      ai-service:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   db_data:
+  ai_service_data:
+    external: true
+    name: ai_service_data
+  waha_sessions:

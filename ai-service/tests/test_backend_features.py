@@ -5,14 +5,15 @@ from unittest.mock import AsyncMock, patch
 import httpx
 from app.main import app
 from app import rag, mock_backend
-from app.models import ChatResult
+from app.models import ChatResult, CustomerContext
+from app.backend_context import BackendIdentity
 from app.protection import requests
 
 
 class BackendTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.env = patch.dict(os.environ, {'AI_API_TOKEN': 'local-test', 'AI_DATABASE_PATH': self.tmp.name + '/test.db', 'AI_REQUESTS_PER_MINUTE': '100'})
+        self.env = patch.dict(os.environ, {'PROPERTY_SOURCE': 'mock', 'AI_SERVICE_TOKEN': '', 'AI_API_TOKEN': 'local-test', 'AI_DATABASE_PATH': self.tmp.name + '/test.db', 'AI_REQUESTS_PER_MINUTE': '100'})
         self.env.start()
         requests.clear()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test')
@@ -63,13 +64,14 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second.status_code, 409)
 
     async def test_whatsapp_text_reply(self):
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'body': 'Hello'}}
+        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '212600000001@c.us', 'id': 'test-text-1', 'body': 'Hello'}}
         with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
+             patch('app.whatsapp.customer_identity', new=AsyncMock(return_value=BackendIdentity('test', CustomerContext(organization_id=mock_backend.ORGANIZATION_ID, lead_id=mock_backend.PROPERTY_ID, contact_id=mock_backend.AGENT_ID)))), \
              patch('app.whatsapp.chat_with_tools', new=AsyncMock(return_value=ChatResult(reply='Hello!'))), \
              patch('app.whatsapp.send_text', new=AsyncMock()) as send:
             response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
         self.assertEqual(response.json()['status'], 'replied')
-        send.assert_awaited_once_with('demo', '123@c.us', 'Hello!')
+        send.assert_awaited_once_with('demo', '212600000001@c.us', 'Hello!')
 
     async def test_whatsapp_ignores_media(self):
         payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'hasMedia': True}}

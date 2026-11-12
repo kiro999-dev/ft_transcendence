@@ -249,8 +249,16 @@ for (const rule of rules) {
     });
   }
 
-  async getVisits() {
-    return this.prisma.visit.findMany({});
+  async getVisits(organizationId: string) {
+    return this.prisma.visit.findMany({
+      where: { properties: { organization_id: organizationId } },
+      include: {
+        properties: true,
+        leads: { include: { visitors: true } },
+        users: { select: { first_name: true, last_name: true } },
+      },
+      orderBy: { startAt: 'asc' },
+    });
   }
 
   async rescheduleVisit(id: string, startsAt: string) {

@@ -8,7 +8,8 @@ COPY package.json ./
 RUN bun install
 
 COPY . .
+RUN bunx prisma generate && bun run build
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "bunx prisma generate && bun run start:dev"]
+CMD ["bun", "dist/main.js"]

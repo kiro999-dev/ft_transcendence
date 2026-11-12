@@ -51,6 +51,12 @@ function VisitFlyout({ visit, onClose }: VisitFlyoutProps) {
         <p className="text-xs text-slate-600">{visit.note}</p>
       </div>
 
+      {visit.startsAt && (
+        <p className="mt-4 text-sm font-semibold text-slate-700">
+          {new Date(visit.startsAt).toLocaleString('en-GB', { timeZone: 'Africa/Casablanca' })} (Casablanca)
+        </p>
+      )}
+
       {/* PROPERTY */}
       <div className="mt-4">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsDateString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString, IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class GetAvailabilityDto {
   @IsString()
@@ -12,7 +12,9 @@ export class GetAvailabilityDto {
   @IsNotEmpty()
   timezone: string;
 
-  @IsNumber()
   @IsOptional()
-  duration_minutes?: number; // 👈 Zid hhad l-field hna!
+  @IsInt()
+  @Min(15)
+  @Max(120)
+  duration_minutes?: number;
 }

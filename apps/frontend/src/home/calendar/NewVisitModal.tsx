@@ -26,6 +26,7 @@ function NewVisitModal({ onSave, onClose }: NewVisitModalProps) {
       status: "PENDING",
       fullName,
       phone: "—",
+      assignedAgent: "Unassigned",
       location: "—",
       budget: "—",
       address: "—",

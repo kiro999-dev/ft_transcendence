@@ -14,6 +14,9 @@ interface AuthenticatedRequest extends Request {
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Get('health')
+  health() { return { status: 'ok', service: 'backend' }; }
+
   
   @Get()
   @UseGuards(AuthenticationGuard)

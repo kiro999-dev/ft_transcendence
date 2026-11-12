@@ -1,11 +1,12 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 import httpx
 from pydantic import ValidationError
 
 from app.models import Availability
+from app.backend_context import backend_headers
 
 
 async def get_availability(property_id: str, preferred_date: str) -> dict:
@@ -17,16 +18,16 @@ async def get_availability(property_id: str, preferred_date: str) -> dict:
         return {"error": "Use a real property UUID and a date in YYYY-MM-DD format."}
 
     base_url = os.getenv("BACKEND_URL", "http://localhost:3000")
-    headers = {}
-    token = os.getenv("AI_SERVICE_TOKEN")
-    organization_id = os.getenv("AI_ORGANIZATION_ID")
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    if organization_id:
-        headers["X-Organization-Id"] = organization_id
+    headers = backend_headers()
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
+            if headers.get('Authorization'):
+                property_response = await client.get(
+                    f"{base_url.rstrip('/')}/properties/{property_id}", headers=headers)
+                property_response.raise_for_status()
+                if property_response.json().get('status') != 'available':
+                    return {"error": "The property is no longer available."}
             response = await client.post(
                 f"{base_url.rstrip('/')}/internal/ai/availability",
                 headers=headers,
@@ -53,21 +54,28 @@ async def create_visit(data: dict) -> dict:
     """Send an explicitly confirmed booking request to the booking service."""
     if os.getenv('BOOKING_ENABLED', '').lower() != 'true':
         return {'error': 'Booking creation is not enabled.'}
-    token = os.getenv('AI_SERVICE_TOKEN')
-    organization_id = os.getenv('AI_ORGANIZATION_ID')
-    if not token or not organization_id:
+    headers = backend_headers()
+    if not headers.get('Authorization') or not headers.get('X-Organization-Id'):
         return {'error': 'Booking service credentials are not configured.'}
     url = os.getenv('BACKEND_URL', 'http://localhost:3000').rstrip('/') + '/internal/ai/visits'
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(url, json=data, headers={
-                'Authorization': f'Bearer {token}', 'X-Organization-Id': organization_id})
+            response = await client.post(url, json=data, headers=headers)
         if response.status_code == 409:
             return {'error': 'This slot is no longer available.'}
         response.raise_for_status()
         result = response.json()
         if not isinstance(result, dict) or not result.get('visit_id') or result.get('status') not in ('confirmed', 'demo'):
             raise ValueError('Invalid booking response')
+        if (result.get('property_id') != data.get('property_id')
+                or not isinstance(result.get('agent'), dict)
+                or result['agent'].get('id') != data.get('agent_id')):
+            raise ValueError('Booking response does not match request')
+        starts = datetime.fromisoformat(str(result.get('starts_at', '')).replace('Z', '+00:00'))
+        ends = datetime.fromisoformat(str(result.get('ends_at', '')).replace('Z', '+00:00'))
+        requested = datetime.fromisoformat(str(data.get('starts_at', '')).replace('Z', '+00:00'))
+        if starts.utcoffset() is None or ends.utcoffset() is None or starts != requested or ends <= starts:
+            raise ValueError('Invalid booking timestamps')
         return result
     except (httpx.HTTPError, ValueError):
         # A timeout does not prove that the backend failed to create a visit.

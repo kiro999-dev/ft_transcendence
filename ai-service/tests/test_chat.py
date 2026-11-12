@@ -40,10 +40,13 @@ class FakeGemini:
 
 class ChatTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
+        self.env = patch.dict(os.environ, {'PROPERTY_SOURCE': 'mock', 'AI_SERVICE_TOKEN': ''})
+        self.env.start()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
 
     async def asyncTearDown(self):
         await self.client.aclose()
+        self.env.stop()
 
     async def test_health_without_api_key(self):
         with patch.dict(os.environ, {}, clear=True):

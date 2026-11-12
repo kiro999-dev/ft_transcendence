@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { LuLayoutDashboard } from "react-icons/lu";
 import { FaUserFriends } from "react-icons/fa";
 import { CiCalendar } from "react-icons/ci";
 import { IoHomeOutline } from "react-icons/io5";
@@ -9,10 +8,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 
 type IconProps = { className?: string };
-
-const DashboardIcon = () => (
-  <LuLayoutDashboard className="text-xl" />
-);
 
 const CrmIcon = () => (
 <FaUserFriends className="text-xl" />

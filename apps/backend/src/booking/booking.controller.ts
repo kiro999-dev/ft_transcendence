@@ -3,7 +3,7 @@ import { GetAvailabilityDto } from '../dtos/availability.dto';
 import { VisitDto } from '../dtos/visit.dto';
 import { AuthenticationGuard } from '../guards/authentication.guard';
 
-import { Controller, Post, Body, Headers, BadRequestException, Get, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Headers, BadRequestException, Get, Patch, Param, UseGuards, Req } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { RescheduleVisitDto } from '../dtos/rescheduleVisit.dto';
 
@@ -27,8 +27,8 @@ export class BookingController {
     return this.bookingService.createVisitFromAI(createVisitDto, organizationId);
   }
   @Get('visits')
-  getVisits() {
-    return this.bookingService.getVisits();
+  getVisits(@Req() req: any) {
+    return this.bookingService.getVisits(req.user.organizationId);
   }
   @Patch('visits/:id/reschedule')
   reschedule( @Param('id') id: string, @Body() body: RescheduleVisitDto) {

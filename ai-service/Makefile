@@ -2,6 +2,7 @@ IMAGE_NAME=ai-service
 CONTAINER_NAME=ai-service
 PORT=8000
 BACKEND_URL?=http://host.docker.internal:3000
+DOCKER_NETWORK?=
 
 build:
 	docker build -t $(IMAGE_NAME) .
@@ -11,6 +12,7 @@ run:
 		--name $(CONTAINER_NAME) \
 		--env-file ../.env \
 		--add-host=host.docker.internal:host-gateway \
+		$(if $(DOCKER_NETWORK),--network $(DOCKER_NETWORK)) \
 		-e BACKEND_URL=$(BACKEND_URL) \
 		-p $(PORT):8000 \
 		-v ai_service_data:/app/data \
