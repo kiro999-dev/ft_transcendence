@@ -23,7 +23,7 @@ export const Properties = () => {
         <div>
             <h1>Properties</h1>
             <p>Total: {properties.length}</p>
-            <div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {properties.map((p) => (
                     <PropertyCard key={p.id} p ={p} />
                 ))}
