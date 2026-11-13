@@ -1,7 +1,7 @@
 all: up
 
 up:
-	@test -f .env || cp .env.example .env
+	@test -f .env || (echo "Error: .env file not found. Please create a .env file with the necessary environment variables." && exit 1)
 	docker compose up --build -d
 
 down:
