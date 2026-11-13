@@ -11,11 +11,18 @@ const PropertyCard = ({ p }: { p: any }) => (
 )
 export const Properties = () => {
     const [properties, setProperties] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(true);
     useEffect(() => {
         const load = async () => {
-            const res = await apiFetch("/properties");
-            const data = await res.json();
-            setProperties(data)
+            try {
+                const res = await apiFetch("/properties");
+                const data = await res.json();
+                setProperties(data)
+            } catch{
+                setError(false);
+            }
+            setLoading(false);
         };
         load();
     }, [])
@@ -23,6 +30,9 @@ export const Properties = () => {
         <div>
             <h1>Properties</h1>
             <p>Total: {properties.length}</p>
+            {loading && <p>Loading...</p>}
+            {!loading && properties.length === 0 && <p>No properties yet</p>}
+            {error && <p></p>}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {properties.map((p) => (
                     <PropertyCard key={p.id} p ={p} />
