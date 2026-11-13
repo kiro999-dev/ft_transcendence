@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { LuLayoutDashboard } from "react-icons/lu";
+// import { useState } from "react";
 import { FaUserFriends } from "react-icons/fa";
-import { CiCalendar } from "react-icons/ci";
+import { CiCalendar, CiClock2 } from "react-icons/ci";
 import { IoHomeOutline } from "react-icons/io5";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { HiOutlineLogout } from "react-icons/hi";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 
 type IconProps = { className?: string };
 
-const DashboardIcon = () => (
-  <LuLayoutDashboard className="text-xl" />
-);
 
 const CrmIcon = () => (
-<FaUserFriends className="text-xl" />
+  <FaUserFriends className="text-xl" />
 );
 
 const CalendarIcon = () => (
   <CiCalendar className="text-xl"/>
+);
+
+const AvailabilityIcon = () => (
+  <CiClock2 className="text-xl" />
 );
 
 const PropertiesIcon = () => (
@@ -38,22 +38,17 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { name: "CRM dashboard", href: "/crm-dashboard", icon: CrmIcon },
-  { name: "Calendar", href: "/calendar", icon: CalendarIcon },
+  { name: "Booking", href: "/booking", icon: CalendarIcon },
+  { name: "Availability", href: "/availability", icon: AvailabilityIcon },
   { name: "Properties", href: "/properties", icon: PropertiesIcon },
 ];
 
 interface SidebarProps {
-  activeHref?: string;
   userName?: string;
   userEmail?: string;
 }
-
-export const Sidebar = ({
-  activeHref = "/crm-dashboard",
-  userName ,
-  userEmail ,
-}: SidebarProps) => {
-  const [current, setCurrent] = useState(activeHref);
+export const Sidebar = ({ userName, userEmail }: SidebarProps) => {
+  const location = useLocation();
   const { logout } = useAuth();
 
   return (
@@ -67,13 +62,12 @@ export const Sidebar = ({
       <nav className="flex-1 space-y-1 px-3">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = current === item.href;
+          const isActive = location.pathname === item.href;
 
           return (
             <Link
               key={item.href}
               to={item.href}
-              onClick={() => setCurrent(item.href)}
               aria-current={isActive ? "page" : undefined}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
