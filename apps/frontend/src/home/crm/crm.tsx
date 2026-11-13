@@ -11,7 +11,6 @@ import { fetchLeads } from "../../services/crmService";
 import type { Lead } from "../../services/crmService";
 import { exampleLeads } from "./exampleLeads";
 
-
 const SHOW_EXAMPLES = true;
 
 export function Crm() {
@@ -25,7 +24,24 @@ export function Crm() {
     async function loadLeads(token: string) {
       try {
         const data = await fetchLeads(token);
-        setLeads(SHOW_EXAMPLES ? [...data, ...exampleLeads] : data);
+        const merged = SHOW_EXAMPLES
+          ? [...data, ...exampleLeads.map((lead) => ({
+              ...lead,
+              id: lead.id ?? "00000000-0000-4000-8000-000000000000",
+              isExample: true,
+              name: lead.name ?? "Unknown lead",
+              email: lead.email ?? "",
+              phone: lead.phone ?? "",
+              city: lead.city ?? "",
+              budget: lead.budget ?? "",
+              bedrooms: lead.bedrooms ?? "",
+              status: lead.status ?? "New",
+              score: lead.score ?? "0",
+              created_at: lead.created_at ?? new Date().toISOString(),
+              notes: lead.notes ?? "",
+            }))]
+          : data;
+        setLeads(merged);
       } catch {
         setError("Could not load your leads. Is the backend running?");
       }

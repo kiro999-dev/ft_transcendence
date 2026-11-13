@@ -88,19 +88,27 @@ export class GetWeeklyRulesService {
     await this.checkAgent(userId, caller);
     return this.prisma.calendarException.findMany({ where: { userId }, orderBy: { startTime: 'asc' } });
   }
-  async createException(dto: CreateCalendarExceptionDto)
-  {
-    const { userId, date, isUnavailable, startTime, endTime, reason } = dto
-    // return await this.prisma.calendarException.create({
-    //   data:{
-    //     userId,
-    //     // date: new Date(date),
-    //     // isUnavailable,
-    //     // startTime: isUnavailable ? null : startTime,
-    //     // endTime: isUnavailable ? null : endTime,
-    //     reason,
-    //   },
-    // });
+
+  async createException(dto: CreateCalendarExceptionDto, caller: Caller) {
+    await this.checkAgent(dto.userId, caller);
+    // CalendarException currently represents blocked time, not extra working hours.
+    if (!dto.isUnavailable) throw new BadRequestException('Custom working hours are not supported yet');
+    if (!!dto.startTime !== !!dto.endTime) throw new BadRequestException('Provide both startTime and endTime');
+    const zone = 'Africa/Casablanca';
+    const bounds = dayBounds(dto.date, zone);
+    const startTime = dto.startTime ? localTime(dto.date, dto.startTime, zone) : bounds.start;
+    const endTime = dto.endTime ? localTime(dto.date, dto.endTime, zone) : bounds.end;
+    if (startTime >= endTime) throw new BadRequestException('Start must be before end');
+    return this.prisma.$transaction(async (tx) => {
+      // Booking creation uses the same lock, preventing conflicting updates.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${dto.userId}))::text`;
+      const visit = await tx.visit.findFirst({ where: {
+        userId: dto.userId, startAt: { lt: endTime }, endAt: { gt: startTime },
+        status: { notIn: ['CANCELLED', 'cancelled'] },
+      }});
+      if (visit) throw new ConflictException('A visit already exists during this time');
+      return tx.calendarException.create({ data: { userId: dto.userId, startTime, endTime, reason: dto.reason } });
+    });
   }
 
   async deleteException(id: string, caller: Caller) {

@@ -218,7 +218,7 @@ export const SignUp = () => {
       organizationName: normalizeOrganizationName(formData.organizationName),
     };
     try {
-    const response = await apiFetch("/auth/sign-up", {
+      const response = await apiFetch("/auth/sign-up", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -226,10 +226,18 @@ export const SignUp = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
 
       if (!response.ok) {
-        toast.error(data.message || "Failed to create account");
+        const message = Array.isArray(data?.message)
+          ? data.message.join(", ")
+          : data?.message || "Failed to create account";
+        toast.error(message);
         return;
       }
 
@@ -238,8 +246,12 @@ export const SignUp = () => {
         navigate("/login");
       }, 500);
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to create account");
+      console.error(error);
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to create account",
+      );
     }
   };
   return (

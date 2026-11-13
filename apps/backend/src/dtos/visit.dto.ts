@@ -24,4 +24,5 @@ export class VisitDto {
   @IsString()
   @IsOptional()
   customer_notes?: string;
+  duration_minutes: number;
 }

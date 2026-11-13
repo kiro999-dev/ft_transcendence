@@ -6,7 +6,6 @@ from app.stream_chat import stream_chat
 
 from app.models import ChatRequest, ChatResponse
 from app.gemini_service import AIServiceError, chat_with_tools
-from app.message_analysis import MessageAnalysis, analyze_message
 from app.conversations import create_conversation, get_messages, save_exchange
 from app.protection import check_access, check_rate_limit
 from app.models import ChatMessage, BookingRequest
@@ -37,15 +36,6 @@ async def chat(request: ChatRequest):
 
     logger.info("Chat completed with %s properties", len(result.properties))
     return ChatResponse(message_received=request.message, **result.model_dump())
-
-
-@app.post("/analyze", response_model=MessageAnalysis, dependencies=[Depends(check_rate_limit)])
-async def analyze(request: ChatRequest):
-    """Analyze one message; this endpoint does not save CRM data."""
-    try:
-        return await analyze_message(request.message)
-    except AIServiceError as error:
-        raise HTTPException(status_code=503, detail=str(error)) from error
 
 
 @app.post("/chat/stream", dependencies=[Depends(check_rate_limit)])
