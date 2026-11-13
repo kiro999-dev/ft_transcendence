@@ -6,7 +6,6 @@ const STATUSES = ['New', 'Contacted', 'Interested', 'Visit Scheduled', 'Closed',
 
 const WITH_DETAILS = {
   visitors: true,
-  property_matches: { include: { properties: true } },
 } as const;
 
 function isText(value: any) {
@@ -46,28 +45,22 @@ export class LeadsService {
       status: lead.status,
       notes: lead.notes ?? '',
       created_at: lead.created_at,
-      property_matches: (lead.property_matches ?? []).map((m: any) => ({
-        id: m.properties.id,
-        title: m.properties.title,
-        location: m.properties.city,
-        price: m.properties.price.toString(),
-        matchScore: m.match_score?.toString() ?? '',
-        reason: m.reason ?? '',
-      })),
     };
   }
 
   async findAll(organizationId: string) {
-    const leads = await this.prisma.leads.findMany({
+    const prisma = this.prisma as any;
+    const leads = await prisma.leads.findMany({
       where: { organization_id: organizationId },
       include: WITH_DETAILS,
       orderBy: { created_at: 'desc' },
     });
-    return leads.map((lead) => this.formatLead(lead));
+    return leads.map((lead: any) => this.formatLead(lead));
   }
 
   async findByPhone(organizationId: string, phone: string) {
-    const lead = await this.prisma.leads.findFirst({
+    const prisma = this.prisma as any;
+    const lead = await prisma.leads.findFirst({
       where: { organization_id: organizationId, visitors: { phone } },
       include: WITH_DETAILS,
       orderBy: { created_at: 'desc' },
@@ -77,6 +70,7 @@ export class LeadsService {
 
   async create(organizationId: string, body: any) {
     const { name, email, phone, city, budget, bedrooms, status, notes } = body;
+    const prisma = this.prisma as any;
 
     if (!isText(name) || !isText(phone)) {
       throw new BadRequestException('Name and phone are required');
@@ -85,7 +79,7 @@ export class LeadsService {
     const budgetValue = toNumber(budget, 'Budget');
     const bedroomsValue = toNumber(bedrooms, 'Bedrooms', true);
 
-    const lead = await this.prisma.$transaction(async (tx) => {
+    const lead = await prisma.$transaction(async (tx: any) => {
       const existing = await tx.visitors.findFirst({
         where: { organization_id: organizationId, phone: phone.trim() },
       });
@@ -121,14 +115,15 @@ export class LeadsService {
   }
 
   async update(organizationId: string, id: string, body: any) {
-    const exists = await this.prisma.leads.findFirst({
+    const prisma = this.prisma as any;
+    const exists = await prisma.leads.findFirst({
       where: { id, organization_id: organizationId },
     });
     if (!exists) throw new NotFoundException('Lead not found');
 
     checkStatus(body.status);
 
-    const lead = await this.prisma.leads.update({
+    const lead = await prisma.leads.update({
       where: { id },
       data: {
         status: body.status,
@@ -141,49 +136,5 @@ export class LeadsService {
     });
 
     return { lead: this.formatLead(lead) };
-  }
-
-  async saveMatches(organizationId: string, leadId: string, matches: any[]) {
-    if (!Array.isArray(matches)) {
-      throw new BadRequestException('matches must be an array');
-    }
-
-    const lead = await this.prisma.leads.findFirst({
-      where: { id: leadId, organization_id: organizationId },
-    });
-    if (!lead) throw new NotFoundException('Lead not found');
-
-    const propertyIds = matches.map((m) => m?.propertyId);
-    if (!propertyIds.every((pid) => typeof pid === 'string' && isUUID(pid))) {
-      throw new BadRequestException('Every match needs a valid propertyId');
-    }
-    if (new Set(propertyIds).size !== propertyIds.length) {
-      throw new BadRequestException('Duplicate property IDs are not allowed');
-    }
-    if (matches.some((m) => m.matchScore !== undefined && !(m.matchScore >= 0 && m.matchScore <= 100))) {
-      throw new BadRequestException('matchScore must be between 0 and 100');
-    }
-
-    const ownProperties = await this.prisma.properties.count({
-      where: { organization_id: organizationId, id: { in: propertyIds } },
-    });
-    if (ownProperties !== propertyIds.length) {
-      throw new BadRequestException('One or more properties do not belong to this organization');
-    }
-
-    await this.prisma.$transaction([
-      this.prisma.property_matches.deleteMany({ where: { lead_id: leadId } }),
-      this.prisma.property_matches.createMany({
-        data: matches.map((m) => ({
-          organization_id: organizationId,
-          lead_id: leadId,
-          property_id: m.propertyId,
-          match_score: m.matchScore,
-          reason: m.reason,
-        })),
-      }),
-    ]);
-
-    return { saved: matches.length };
   }
 }

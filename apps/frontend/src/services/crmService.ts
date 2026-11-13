@@ -2,14 +2,6 @@ import { apiFetch } from "../lib/api";
 
 export type LeadStatus = "New" | "Contacted" | "Interested" | "Visit Scheduled" | "Closed" | "Lost";
 
-export type PropertyMatch = {
-  id: string;
-  title: string;
-  location: string;
-  price: string;
-  matchScore: string;
-};
-
 export type Lead = {
   id: string;
   name: string;
@@ -21,8 +13,8 @@ export type Lead = {
   status: LeadStatus;
   score: string;
   created_at: string;
-  property_matches?: PropertyMatch[];
   notes?: string;
+  isExample?: boolean;
 };
 
 
@@ -57,6 +49,24 @@ export async function updateLead(id: string, data: Partial<Lead>, token: string)
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update lead");
+
+  if (!res.ok) {
+    let message = "Failed to update lead";
+    try {
+      const payload = await res.json();
+      if (payload?.message) {
+        message = payload.message;
+      }
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) message = text;
+      } catch {
+        // ignore
+      }
+    }
+    throw new Error(message);
+  }
+
   return res.json();
 }
