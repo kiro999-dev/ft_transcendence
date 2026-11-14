@@ -2,12 +2,26 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 
 const PropertyCard = ({ p }: { p: any }) => (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition">
-        <h2 className="text-slate-900 font-extrabold tracking-tight"> { p.title} </h2>
-        <p className="text-sm text-slate-600"> { p.city } </p>
-        <p> { p.price } MAD</p>
-        <p> { p.bedrooms } bedrooms</p>
-    </div>
+    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition flex flex-col">
+        {/* "place of the pic" */}
+        <div className="h-48 bg-slate-200 rounded-t-2xl"></div>
+
+        {/* {body} */}
+        <div className="p-4 flex flex-col gap-2 flex-1">
+            <p className="text-lg font-extrabold tracking-tight text-slate-900">{p.price} MAD</p>
+            <h2 className="text-[15px] font-semibold text-slate-900">{p.title}</h2>
+            <p className="text-[13px] text-slate-500">{p.city}</p>
+            <div className="flex gap-4 text-[13px] text-slate-700">
+                <span>{p.bedrooms} beds</span>
+                <span>{p.bathrooms} baths</span>
+                {p.area && <span>{p.area} m²</span>}
+            </div>
+            {/* {footer} */}
+            <div className="mt-auto pt-3 border-t border-slate-100 text-xs text-slate-500">
+                {p.property_type}
+            </div>
+        </div>
+    </article>
 )
 export const Properties = () => {
     const [properties, setProperties] = useState<any[]>([]);
