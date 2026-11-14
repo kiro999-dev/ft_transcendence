@@ -12,7 +12,7 @@ const PropertyCard = ({ p }: { p: any }) => (
 export const Properties = () => {
     const [properties, setProperties] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(true);
+    const [error, setError] = useState(false);
     useEffect(() => {
         const load = async () => {
             try {
@@ -20,7 +20,7 @@ export const Properties = () => {
                 const data = await res.json();
                 setProperties(data)
             } catch{
-                setError(false);
+                setError(true);
             }
             setLoading(false);
         };
@@ -31,8 +31,8 @@ export const Properties = () => {
             <h1>Properties</h1>
             <p>Total: {properties.length}</p>
             {loading && <p>Loading...</p>}
-            {!loading && properties.length === 0 && <p>No properties yet</p>}
-            {error && <p></p>}
+            {!loading && !error && properties.length === 0 && <p>No properties yet</p>}
+            {error && <p>Couldn't load properties</p>}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {properties.map((p) => (
                     <PropertyCard key={p.id} p ={p} />
