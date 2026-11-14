@@ -17,6 +17,10 @@ export const Properties = () => {
         const load = async () => {
             try {
                 const res = await apiFetch("/properties");
+                if (!res.ok)
+                {
+                    throw new Error("Failed to load properties")
+                }
                 const data = await res.json();
                 setProperties(data)
             } catch{
