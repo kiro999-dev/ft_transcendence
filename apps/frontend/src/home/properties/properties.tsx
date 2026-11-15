@@ -8,7 +8,7 @@ const PropertyCard = ({ p }: { p: any }) => (
 
         {/* {body} */}
         <div className="p-4 flex flex-col gap-2 flex-1">
-            <p className="text-lg font-extrabold tracking-tight text-slate-900">{p.price} MAD</p>
+            <p className="text-lg font-extrabold tracking-tight text-slate-900">{Number(p.price).toLocaleString("en-US")} MAD</p>
             <h2 className="text-[15px] font-semibold text-slate-900">{p.title}</h2>
             <p className="text-[13px] text-slate-500">{p.city}</p>
             <div className="flex gap-4 text-[13px] text-slate-700">
