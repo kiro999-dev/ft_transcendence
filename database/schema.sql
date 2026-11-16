@@ -150,6 +150,16 @@ CREATE TABLE IF NOT EXISTS "AgentAvailability" (
 
 CREATE INDEX IF NOT EXISTS "AgentAvailability_userId_startTime_idx" ON "AgentAvailability" ("userId", "startTime");
 
+-- 13.1 جدول التوفر الأسبوعي (WeeklyAvailability)
+CREATE TABLE IF NOT EXISTS "WeeklyAvailability" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" uuid NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+    "dayOfWeek" integer NOT NULL,
+    "startTime" text NOT NULL,
+    "endTime" text NOT NULL,
+    "slotDuration" integer NOT NULL DEFAULT 30
+);
+
 -- 14. جدول الزيارات (Visit)
 CREATE TABLE IF NOT EXISTS "Visit" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

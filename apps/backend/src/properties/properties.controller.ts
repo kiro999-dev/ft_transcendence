@@ -7,6 +7,7 @@ import { QueryPropertyDto } from './dto/query-property.dto';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import { ROLES } from '../decorator/roles.decorator';
 
+
 @Controller('properties')
 export class PropertiesController {
       constructor (private properties: PropertiesService) {}
