@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "bunx prisma generate && bun run start:dev"]
+CMD ["sh", "-c", "bunx prisma db push && bunx prisma generate && bun run start:dev"]
