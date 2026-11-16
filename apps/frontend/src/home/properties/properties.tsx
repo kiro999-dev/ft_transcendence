@@ -59,8 +59,9 @@ export const Properties = () => {
     }, [])
     return (
         <div>
-            <h1>Properties</h1>
-            <p>Total: {properties.length}</p>
+            <p className="text-sm text-slate-500">Dashboard / Properties</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Properties</h1>
+            <p className="text-sm text-slate-600">All listings of your agency.</p>
             {loading && <p>Loading...</p>}
             {!loading && !error && properties.length === 0 && <p>No properties yet</p>}
             {error && <p>Couldn't load properties</p>}
