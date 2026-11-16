@@ -1,21 +1,59 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 
+const statusStyle: Record<string, string> = {
+    available: "bg-green-100 text-green-800",
+    reserved: "bg-amber-100 text-amber-800",
+    sold: "bg-slate-100 text-slate-800",
+    rented: "bg-slate-100 text-slate-800",
+    hidden: "bg-gray-100 text-gray-800"
+}
 const PropertyCard = ({ p }: { p: any }) => (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition">
-        <h2 className="text-slate-900 font-extrabold tracking-tight"> { p.title} </h2>
-        <p className="text-sm text-slate-600"> { p.city } </p>
-        <p> { p.price } MAD</p>
-        <p> { p.bedrooms } bedrooms</p>
-    </div>
+    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition flex flex-col">
+        {/* "place of the pic" */}
+        <div className="relative h-48 bg-slate-200 rounded-t-2xl">
+            <span className={`absolute top-3 left-3 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyle[p.status]}`}>{p.status}</span>
+            <span className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-xs font-semibold bg-white text-slate-900">
+                {p.listing_type === "sale" ? "For sale" : "For rent"}
+            </span>
+        </div>
+        
+
+        {/* {body} */}
+        <div className="p-4 flex flex-col gap-2 flex-1">
+            <p className="text-lg font-extrabold tracking-tight text-slate-900">{Number(p.price).toLocaleString("en-US")} MAD</p>
+            <h2 className="text-[15px] font-semibold text-slate-900">{p.title}</h2>
+            <p className="text-[13px] text-slate-500">{p.city}</p>
+            <div className="flex gap-4 text-[13px] text-slate-700">
+                <span>{p.bedrooms} beds</span>
+                <span>{p.bathrooms} baths</span>
+                {p.area && <span>{p.area} m²</span>}
+            </div>
+            {/* {footer} */}
+            <div className="mt-auto pt-3 border-t border-slate-100 text-xs text-slate-500">
+                {p.property_type}
+            </div>
+        </div>
+    </article>
 )
 export const Properties = () => {
     const [properties, setProperties] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     useEffect(() => {
         const load = async () => {
-            const res = await apiFetch("/properties");
-            const data = await res.json();
-            setProperties(data)
+            try {
+                const res = await apiFetch("/properties");
+                if (!res.ok)
+                {
+                    throw new Error("Failed to load properties")
+                }
+                const data = await res.json();
+                setProperties(data)
+            } catch{
+                setError(true);
+            }
+            setLoading(false);
         };
         load();
     }, [])
@@ -23,7 +61,10 @@ export const Properties = () => {
         <div>
             <h1>Properties</h1>
             <p>Total: {properties.length}</p>
-            <div>
+            {loading && <p>Loading...</p>}
+            {!loading && !error && properties.length === 0 && <p>No properties yet</p>}
+            {error && <p>Couldn't load properties</p>}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {properties.map((p) => (
                     <PropertyCard key={p.id} p ={p} />
                 ))}
