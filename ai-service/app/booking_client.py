@@ -6,9 +6,10 @@ import httpx
 from pydantic import ValidationError
 
 from app.models import Availability
+from app.backend_auth import backend_token
 
 
-async def get_availability(property_id: str, preferred_date: str) -> dict:
+async def get_availability(property_id: str, preferred_date: str, access_token=None) -> dict:
     """Ask the backend for visit slots. Never calculate availability here."""
     try:
         UUID(property_id)
@@ -18,7 +19,7 @@ async def get_availability(property_id: str, preferred_date: str) -> dict:
 
     base_url = os.getenv("BACKEND_URL", "http://localhost:3000")
     headers = {}
-    token = os.getenv("AI_SERVICE_TOKEN")
+    token = access_token or await backend_token()
     organization_id = os.getenv("AI_ORGANIZATION_ID")
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -49,19 +50,21 @@ async def get_availability(property_id: str, preferred_date: str) -> dict:
         return {"error": "The booking service is unavailable or returned invalid data. Try again later."}
 
 
-async def create_visit(data: dict) -> dict:
+async def create_visit(data: dict, access_token=None) -> dict:
     """Send an explicitly confirmed booking request to the booking service."""
     if os.getenv('BOOKING_ENABLED', '').lower() != 'true':
         return {'error': 'Booking creation is not enabled.'}
-    token = os.getenv('AI_SERVICE_TOKEN')
+    token = access_token or await backend_token()
     organization_id = os.getenv('AI_ORGANIZATION_ID')
-    if not token or not organization_id:
+    if not token:
         return {'error': 'Booking service credentials are not configured.'}
     url = os.getenv('BACKEND_URL', 'http://localhost:3000').rstrip('/') + '/internal/ai/visits'
+    headers = {'Authorization': f'Bearer {token}'}
+    if organization_id:
+        headers['X-Organization-Id'] = organization_id
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(url, json=data, headers={
-                'Authorization': f'Bearer {token}', 'X-Organization-Id': organization_id})
+            response = await client.post(url, json=data, headers=headers)
         if response.status_code == 409:
             return {'error': 'This slot is no longer available.'}
         response.raise_for_status()

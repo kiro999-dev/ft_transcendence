@@ -14,6 +14,7 @@ from app.gemini_service import chat_with_tools
 from app.message_analysis import analyze_message
 from app.conversations import whatsapp_conversation, get_messages, save_exchange
 from app.models import ChatMessage
+from app.whatsapp_sessions import agency_session, login_for_agency
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix='/whatsapp')
@@ -71,16 +72,19 @@ async def send_text(session: str, chat_id: str, text: str):
 @router.post('/webhook')
 async def webhook(request: Request):
     secret = os.getenv('WAHA_WEBHOOK_SECRET')
-    configured_session = os.getenv('WAHA_SESSION')
-    if not secret or not configured_session:
+    if not secret:
         raise HTTPException(503, 'WhatsApp is not configured')
     if not hmac.compare_digest(request.headers.get('X-Webhook-Secret', ''), secret):
         raise HTTPException(401, 'Invalid webhook secret')
     data = await request.json()
-    if data.get('event') != 'message' or data.get('session') != configured_session:
+    session = data.get('session')
+    if data.get('event') != 'message' or not isinstance(session, str):
+        return {'status': 'ignored'}
+    agency = agency_session(session)
+    if not agency:
         return {'status': 'ignored'}
     payload = data.get('payload') or {}
-    if payload.get('fromMe') or not payload.get('from', '').endswith('@c.us'):
+    if payload.get('fromMe') or not payload.get('from', '').endswith(('@c.us', '@lid')):
         return {'status': 'ignored'}
     message = payload.get('body') or ''
     media = payload.get('media') or {}
@@ -94,12 +98,14 @@ async def webhook(request: Request):
             raise ValueError('Message too long')
         analysis = await analyze_message(message)
         if analysis.inappropriate:
-            await send_text(configured_session, payload['from'], 'Please keep the conversation respectful.')
+            await send_text(session, payload['from'], 'Please keep the conversation respectful.')
             return {'status': 'moderated'}
-        conversation_id = whatsapp_conversation(configured_session, payload['from'])
+        conversation_id = whatsapp_conversation(session, payload['from'])
         history = [ChatMessage(**item) for item in get_messages(conversation_id)[-20:]]
-        result = await chat_with_tools(message, history)
-        await send_text(configured_session, payload['from'], result.reply)
+        organization_id, credentials = agency
+        token = await login_for_agency(organization_id, credentials)
+        result = await chat_with_tools(message, history, organization_id, token)
+        await send_text(session, payload['from'], result.reply)
         save_exchange(conversation_id, message, result.reply)
         return {'status': 'replied', 'sentiment': analysis.sentiment}
     except Exception as error:

@@ -38,6 +38,10 @@ def settings():
 async def connect():
     database, _ = settings()
     conn = await psycopg.AsyncConnection.connect(database)
+    # Existing knowledge volumes can predate agency isolation. Old rows remain unassigned.
+    await conn.execute("ALTER TABLE ai_document_chunks ADD COLUMN IF NOT EXISTS organization_id UUID")
+    await conn.execute("CREATE INDEX IF NOT EXISTS ai_chunks_organization_idx ON ai_document_chunks (organization_id)")
+    await conn.commit()
     await register_vector_async(conn)
     return conn
 
@@ -54,7 +58,7 @@ async def embed(texts, task_type):
     return vectors
 
 
-async def ingest(title, text):
+async def ingest(title, text, organization_id):
     parts = chunks(text)
     if not parts:
         raise RAGError('Document is empty.')
@@ -63,24 +67,24 @@ async def ingest(title, text):
     async with await connect() as conn:
         async with conn.cursor() as cur:
             for index, (content, vector) in enumerate(zip(parts, vectors)):
-                await cur.execute('INSERT INTO ai_document_chunks (document_id, title, chunk_index, content, embedding) VALUES (%s, %s, %s, %s, %s)',
-                                  (document_id, title, index, content, Vector(vector)))
+                await cur.execute('INSERT INTO ai_document_chunks (organization_id, document_id, title, chunk_index, content, embedding) VALUES (%s, %s, %s, %s, %s, %s)',
+                                  (organization_id, document_id, title, index, content, Vector(vector)))
     return {'document_id': document_id, 'chunks': len(parts)}
 
 
-async def retrieve(question):
+async def retrieve(question, organization_id):
     vector = (await embed([question], 'RETRIEVAL_QUERY'))[0]
     async with await connect() as conn:
         async with conn.cursor() as cur:
-            await cur.execute('SELECT document_id, title, chunk_index, content, 1 - (embedding <=> %s) AS similarity FROM ai_document_chunks ORDER BY embedding <=> %s LIMIT 5',
-                              (Vector(vector), Vector(vector)))
+            await cur.execute('SELECT document_id, title, chunk_index, content, 1 - (embedding <=> %s) AS similarity FROM ai_document_chunks WHERE organization_id = %s ORDER BY embedding <=> %s LIMIT 5',
+                              (Vector(vector), organization_id, Vector(vector)))
             rows = await cur.fetchall()
     return [{'document_id': str(row[0]), 'title': row[1], 'chunk_index': row[2],
              'content': row[3], 'similarity': float(row[4])} for row in rows if row[4] is not None and row[4] >= 0.4]
 
 
-async def answer(question):
-    results = await retrieve(question)
+async def answer(question, organization_id):
+    results = await retrieve(question, organization_id)
     if not results:
         return {'answer': 'I could not find that information in the agency documents.', 'sources': []}
     _, api_key = settings()

@@ -8,11 +8,13 @@ class PropertyClientTests(unittest.IsolatedAsyncioTestCase):
     @patch.dict('os.environ', {'AI_SERVICE_TOKEN': 'test', 'AI_ORGANIZATION_ID': 'org'})
     async def test_search_filters_and_available_only(self):
         def handler(request):
-            self.assertEqual(request.url.path, '/internal/ai/properties/search')
-            self.assertIn(b'"city":"Marrakech"', request.content)
-            return httpx.Response(200, json={'results': [
+            self.assertEqual(request.url.path, '/properties')
+            self.assertEqual(request.method, 'GET')
+            self.assertEqual(request.url.params['city'], 'Marrakech')
+            self.assertEqual(request.url.params['status'], 'available')
+            return httpx.Response(200, json=[
                 {'id': '1', 'city': 'Marrakech', 'price': 100, 'property_type': 'villa', 'status': 'available'},
-                {'id': '2', 'city': 'Marrakech', 'price': 100, 'property_type': 'villa', 'status': 'sold'}]})
+                {'id': '2', 'city': 'Marrakech', 'price': 100, 'property_type': 'villa', 'status': 'sold'}])
         client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
         with patch('app.property_client.httpx.AsyncClient', return_value=client):
             result = await search_properties(city='Marrakech')

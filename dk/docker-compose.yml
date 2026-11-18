@@ -42,5 +42,74 @@ services:
       - backend
     restart: always
 
+  ai-rag-db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ai_knowledge
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ${AI_RAG_PASSWORD:-local-rag-password}
+    volumes:
+      - ai_rag_data:/var/lib/postgresql/data
+      - ../ai-service/database/rag.sql:/docker-entrypoint-initdb.d/01-rag.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_user -d ai_knowledge"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: always
+
+  ai-service:
+    build:
+      context: ../ai-service
+    env_file: .env
+    environment:
+      RAG_ENABLED: ${RAG_ENABLED:-true}
+      AI_RAG_DATABASE_URL: postgresql://ai_user:${AI_RAG_PASSWORD:-local-rag-password}@ai-rag-db:5432/ai_knowledge
+      BACKEND_URL: ${AI_BACKEND_URL:-http://backend:3000}
+      DEMO_BACKEND: ${DEMO_BACKEND:-false}
+      AI_BACKEND_CREDENTIALS_FILE: ${AI_BACKEND_CREDENTIALS_FILE:-/app/data/test_agency.json}
+      PROPERTY_SOURCE: ${PROPERTY_SOURCE:-backend}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-demo-token}
+      AI_ORGANIZATION_ID: ${AI_ORGANIZATION_ID:-demo-agency}
+      BOOKING_ENABLED: ${BOOKING_ENABLED:-true}
+      WAHA_URL: http://waha:3000
+      WAHA_SESSION: ${WAHA_SESSION:-default}
+      WAHA_WEBHOOK_SECRET: ${WAHA_WEBHOOK_SECRET:-local-webhook-secret}
+      WAHA_API_KEY: ${WAHA_API_KEY:-local-waha-key}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ai_data:/app/data
+    depends_on:
+      backend:
+        condition: service_started
+      ai-rag-db:
+        condition: service_healthy
+    restart: always
+
+  waha:
+    image: devlikeapro/waha:latest
+    environment:
+      WAHA_DASHBOARD_USERNAME: ${WAHA_DASHBOARD_USERNAME:-admin}
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD:-local-waha-password}
+      WHATSAPP_SWAGGER_USERNAME: ${WHATSAPP_SWAGGER_USERNAME:-admin}
+      WHATSAPP_SWAGGER_PASSWORD: ${WHATSAPP_SWAGGER_PASSWORD:-local-waha-password}
+      WHATSAPP_API_KEY: ${WAHA_API_KEY:-local-waha-key}
+      WHATSAPP_HOOK_URL: http://ai-service:8000/whatsapp/webhook
+      WHATSAPP_HOOK_EVENTS: message
+      WHATSAPP_HOOK_CUSTOM_HEADERS: X-Webhook-Secret:${WAHA_WEBHOOK_SECRET:-local-webhook-secret}
+      WAHA_BASE_URL: http://waha:3000
+    ports:
+      - "3001:3000"
+    volumes:
+      - waha_sessions:/app/.sessions
+      - waha_media:/app/.media
+    restart: always
+
 volumes:
+  ai_rag_data:
+  ai_data:
+  waha_sessions:
+  waha_media:
   db_data:

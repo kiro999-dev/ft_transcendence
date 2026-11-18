@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -13,6 +14,8 @@ from app.models import ChatMessage, BookingRequest
 from app.booking_client import create_visit
 from app.rag_routes import router as rag_router
 from app.whatsapp import router as whatsapp_router
+from app.whatsapp_sessions import router as whatsapp_sessions_router
+from app.agency_context import optional_request_agency, configured_agency
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,6 +23,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="AI Real Estate Service", version="0.1.0")
 app.include_router(rag_router)
 app.include_router(whatsapp_router)
+app.include_router(whatsapp_sessions_router)
 
 
 @app.get("/health")
@@ -29,9 +33,12 @@ async def health():
 
 
 @app.post("/chat", response_model=ChatResponse, dependencies=[Depends(check_rate_limit)])
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, http_request: Request, agency: str | None = Depends(optional_request_agency)):
+    if os.getenv('PROPERTY_SOURCE', 'mock') == 'backend' and not agency:
+        raise HTTPException(401, 'Agency login required.')
+    access_token = http_request.headers.get('Authorization', '')[7:] if agency else None
     try:
-        result = await chat_with_tools(request.message, request.history)
+        result = await chat_with_tools(request.message, request.history, agency, access_token)
     except AIServiceError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
@@ -49,8 +56,11 @@ async def analyze(request: ChatRequest):
 
 
 @app.post("/chat/stream", dependencies=[Depends(check_rate_limit)])
-async def chat_stream(request: ChatRequest):
-    return StreamingResponse(stream_chat(request), media_type="text/event-stream",
+async def chat_stream(request: ChatRequest, http_request: Request, agency: str | None = Depends(optional_request_agency)):
+    if os.getenv('PROPERTY_SOURCE', 'mock') == 'backend' and not agency:
+        raise HTTPException(401, 'Agency login required.')
+    access_token = http_request.headers.get('Authorization', '')[7:] if agency else None
+    return StreamingResponse(stream_chat(request, agency, access_token), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache"})
 
 
@@ -75,7 +85,7 @@ async def conversation_message(conversation_id: str, request: ChatRequest):
         raise HTTPException(status_code=404, detail="Conversation not found")
     history = [ChatMessage(**item) for item in messages[-20:]]
     try:
-        result = await chat_with_tools(request.message, history)
+        result = await chat_with_tools(request.message, history, await configured_agency())
     except AIServiceError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     save_exchange(conversation_id, request.message, result.reply)

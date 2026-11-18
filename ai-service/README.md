@@ -4,18 +4,24 @@ This service uses a **demo property catalog**. Main currently has a booking
 availability endpoint, but no property search/detail or visit creation endpoint.
 A successful demo search does not mean the live agency catalog is connected.
 
+## Run the project with Docker Compose
+
+From `dk`, run `make` to start the frontend, backend, database, AI service, and WAHA. Add your Gemini API key to `dk/.env` first. The AI API is at http://localhost:8000/docs and WAHA is at http://localhost:3001. Within Docker, the AI uses `http://waha:3000` and the backend uses `http://backend:3000`.
+
+Open the WAHA dashboard, create or start the configured session (default `default`), and scan its QR code with WhatsApp. The global webhook sends incoming messages to the AI service. Compose defaults to the real backend and uses the local test agency credentials in the AI data volume. These credentials were created for this machine and are not provisioned automatically on other machines. Chat can search and check availability; it does not yet create appointments.
+
 ## Run locally
 
 ### Using Docker
 
-Put `GEMINI_API_KEY` in the project-root `.env`. From `ai-service`, run:
+Put `GEMINI_API_KEY` and `GEMINI_MODEL` in `dk/.env`. The Makefile uses that file by default; use `make run ENV_FILE=/path/to/.env` to select another file. From `ai-service`, run:
 
 ```sh
 make build
 make run
 ```
 
-Open `http://localhost:8000/docs`. The Makefile loads `../.env` and connects to
+Open `http://localhost:8000/docs`. The Makefile loads `../dk/.env` and connects to
 the backend on your computer at port 3000 through `host.docker.internal`.
 Restart the container after changing `.env`; rebuild after changing Python code.
 For a different backend address, use `make run BACKEND_URL=http://your-host:3000`.
@@ -244,42 +250,48 @@ check with the agency before retrying: the booking may have been created.
 
 ### RAG: agency knowledge
 
-RAG uses a separate AI-owned PostgreSQL database with pgvector, not another
-service's tables. Put a development `AI_RAG_PASSWORD` in the root `.env`, then:
+`cd dk && make` starts a separate pgvector database for AI knowledge and enables
+RAG in the AI service. Configure `GEMINI_API_KEY`, `AI_API_TOKEN`, and
+`AI_RAG_PASSWORD` in `dk/.env` before starting. Knowledge data is stored in
+the `ai_rag_data` Docker volume; `make fclean` deletes the volume.
 
-```sh
-docker compose --env-file ../.env -f compose.rag.yml up -d
-```
+Send `Authorization: Bearer <backend access token>` with requests to
+`POST /knowledge/documents` (JSON `title` and `text`) to add agency information.
+`POST /knowledge/ask` (JSON `question`) searches only that agency's documents.
+The backend verifies the token through `/users/me`; callers cannot select an
+organization by sending an ID. Gemini receives document text to create embeddings
+and relevant excerpts to answer questions. Only upload trusted information.
 
-For the AI container, set `AI_RAG_DATABASE_URL` in `.env` to
-`postgresql://ai_user:<password>@host.docker.internal:55432/ai_knowledge`,
-set `RAG_ENABLED=true`, and restart with `make run`. The database creates its
-schema on first initialization. For an existing AI database, apply
-`database/rag.sql` with an appropriate database administrator; do not apply it
-to a teammate's database. PostgreSQL access is limited to localhost by the
-example compose configuration.
+Each registered WhatsApp session uses its agency's knowledge. Existing knowledge
+chunks created before agency isolation have no organization and are not returned;
+an administrator must explicitly assign them before using them.
 
-With the AI token, `POST /knowledge/documents` accepts a JSON `title` and `text`
-(up to 50,000 characters). The service splits the text, embeds it with Gemini,
-and saves the chunks in pgvector. `POST /knowledge/ask` accepts a `question` and
-returns an answer and source chunks. `/chat` and `/chat/stream` can also call
-the knowledge tool when `RAG_ENABLED=true`. Only upload trusted agency
-information: this basic version accepts text and does not provide a document
-management UI or tenant-level filtering.
 
-### WhatsApp text and voice
+### WhatsApp sessions
 
-Set `WAHA_URL`, `WAHA_API_KEY`, `WAHA_SESSION`, and `WAHA_WEBHOOK_SECRET` in the
-server environment. Configure the WAHA `message` webhook to send requests to
-`/whatsapp/webhook` with the custom `X-Webhook-Secret` header. Configure WAHA to
-make its downloaded media accessible on the exact `WAHA_URL` origin. The AI
-accepts only that session and direct messages; it ignores outgoing messages and
-other events. It downloads supported audio from that same origin (up to 10 MB),
-asks Gemini to transcribe it, and sends a text reply. Inappropriate messages
-receive a warning. It stores text conversation history in the AI SQLite store.
+Compose runs WAHA and configures the webhook. Each agency must register its own
+session by calling the AI service with its backend user access token:
 
-The webhook must be tested with the team's actual WAHA version and network
-configuration. It does not yet deduplicate webhook retries or guarantee message
-ordering; a timeout after sending can cause duplicate replies if WAHA retries.
-Sentiment is calculated but is not persisted to CRM. No QR/settings UI is
-included. Gemini and WAHA availability are required for real voice testing.
+- `POST /whatsapp/session` with JSON `email` and `password` for a dedicated backend
+  account belonging to the same agency. This verifies that account and starts the
+  agency's WAHA session. Use a dedicated account without two-factor login: the AI
+  logs in automatically, and backend login rotates that account's refresh token.
+- `GET /whatsapp/session` returns the agency's session status.
+- `GET /whatsapp/session/qr` returns its QR image when pairing is required.
+- `POST /whatsapp/session/start`, `/restart`, or `/stop` controls that session.
+
+All these calls require `Authorization: Bearer <backend access token>` for a
+user of the agency. The session name is assigned by the AI service. Incoming
+messages from unregistered sessions are ignored. The platform still needs UI
+code to call these endpoints and show the QR image.
+
+The service encrypts agency service-account credentials in its SQLite volume.
+`dk/Makefile` creates `AI_SESSION_ENCRYPTION_KEY` in `dk/.env` on first run;
+keep that key with the AI data volume or the stored credentials cannot be read.
+The global WAHA webhook uses `WAHA_WEBHOOK_SECRET`. Existing test sessions made
+before this mapping need an explicit administrator migration or registration.
+The current booking flow remains limited to the configured test agency and test
+contact; new agency sessions can search properties, availability and knowledge.
+
+The webhook does not yet deduplicate retries or guarantee ordering. Voice
+messages are transcribed by Gemini, and replies are text.
