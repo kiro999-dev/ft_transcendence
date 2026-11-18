@@ -40,8 +40,9 @@ export const Properties = () => {
     const [properties, setProperties] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    useEffect(() => {
         const load = async () => {
+            setError(false)
+            setLoading(true)
             try {
                 const res = await apiFetch("/properties");
                 if (!res.ok)
@@ -55,16 +56,35 @@ export const Properties = () => {
             }
             setLoading(false);
         };
-        load();
+
+        useEffect(() => {
+            load();
     }, [])
     return (
         <div>
             <p className="text-sm text-slate-500">Dashboard / Properties</p>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Properties</h1>
             <p className="text-sm text-slate-600">All listings of your agency.</p>
-            {loading && <p>Loading...</p>}
-            {!loading && !error && properties.length === 0 && <p>No properties yet</p>}
-            {error && <p>Couldn't load properties</p>}
+            
+            {loading && (
+                <div className=" bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600"/>
+                    <p className="text-sm text-slate-500">Loading properties...</p>
+                </div>
+            )}
+            {!loading && !error && properties.length === 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center flex flex-col items-center gap-3">
+                    <h2 className="text-lg font-extrabold text-slate-900">No properties yet</h2>
+                    <p className="text-sm text-slate-600 max-w-sm">Add your first listing. Clients and the assistant will see it once it is available.</p>
+                </div>
+            )}
+            {error && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center flex flex-col items-center gap-3">
+                    <h2 className="text-lg font-extrabold text-slate-900">Couldn't load properties</h2>
+                    <p className="text-sm text-slate-600 max-w-sm">The server did not answer. Your listings are safe. Check your connection and try again.</p>
+                    <button onClick={load}  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Try again</button>
+                </div>
+            )}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {properties.map((p) => (
                     <PropertyCard key={p.id} p ={p} />
