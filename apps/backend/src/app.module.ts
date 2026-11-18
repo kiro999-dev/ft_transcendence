@@ -15,6 +15,7 @@ import { PropertiesModule } from './properties/properties.module';
 import { LeadsModule } from './leads/leads.module';
 import { OtpService } from './otp/otp.service';
 import { OtpModule } from './otp/otp.module';
+import { WhatsappIntegrationModule } from './whatsapp-integration/whatsapp-integration.module';
 @Module({
   controllers: [AppController],
   providers: [AppService, OrganizationService, OtpService],
@@ -43,6 +44,7 @@ import { OtpModule } from './otp/otp.module';
     PropertiesModule,
     LeadsModule,
     OtpModule,
+    WhatsappIntegrationModule,
   ],
 })
 export class AppModule {}

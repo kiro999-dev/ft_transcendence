@@ -1,15 +1,20 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
+import { IsString, IsNotEmpty, IsDateString, IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class GetAvailabilityDto {
-    @IsNotEmpty()
-    @IsUUID()
-    property_id: string;
+  @IsString()
+  @IsNotEmpty()
+  property_id: string;
 
-    @IsNotEmpty()
-    @IsString()
-    preferred_date: string;
+  @IsDateString()
+  preferred_date: string;
 
-    @IsOptional()
-    @IsString()
-    timezone?: string;
+  @IsString()
+  @IsNotEmpty()
+  timezone: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(15)
+  @Max(120)
+  duration_minutes?: number;
 }

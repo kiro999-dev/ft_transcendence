@@ -14,6 +14,8 @@ import { ChangePassword } from "./auth/ChangePassword";
 import { Crm } from "./home/crm/crm";
 import { OrgSettings } from "./home/componenets/OrganizationSettings";
 import { TwoFactor } from "./auth/TwoFactor";
+import { Properties } from "./home/properties/properties";
+
 function App() {
 
 
@@ -32,10 +34,10 @@ function App() {
           <Route path="/dashboard" element={<Navigate to="/crm-dashboard" replace />} />
           <Route path="/crm-dashboard" element={<Dashboard><Crm /></Dashboard>} />
           <Route path="/calendar" element={<Calendar />} />
-          <Route path="/properties" element={<Dashboard />} />
           <Route path="/me" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
            <Route path="/organization" element={<OrgSettings/>} />
+           <Route path="/properties" element={<Dashboard><Properties /></Dashboard>} />
         </Route>
       </Routes>
 

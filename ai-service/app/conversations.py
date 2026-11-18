@@ -46,3 +46,14 @@ def whatsapp_conversation(session, phone):
         db.execute('INSERT INTO conversations (id) VALUES (?)', (conversation_id,))
         db.execute('INSERT INTO whatsapp_chats (session, phone, conversation_id) VALUES (?, ?, ?)', (session, phone, conversation_id))
         return conversation_id
+
+
+def bind_customer(conversation_id, customer):
+    """Keep stored history associated with one trusted customer identity."""
+    import json
+    context = json.dumps(customer.model_dump(), sort_keys=True) if customer else ''
+    with connect() as db:
+        db.execute('CREATE TABLE IF NOT EXISTS conversation_contexts (conversation_id TEXT PRIMARY KEY REFERENCES conversations(id), context TEXT NOT NULL)')
+        db.execute('INSERT OR IGNORE INTO conversation_contexts (conversation_id, context) VALUES (?, ?)', (conversation_id, context))
+        saved = db.execute('SELECT context FROM conversation_contexts WHERE conversation_id = ?', (conversation_id,)).fetchone()
+        return saved[0] == context

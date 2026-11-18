@@ -8,7 +8,6 @@ import httpx
 
 from app.main import app
 from app.gemini_service import chat_with_tools
-from app.agency_context import optional_request_agency
 from app.property_mock import search_properties
 
 
@@ -41,10 +40,13 @@ class FakeGemini:
 
 class ChatTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
+        self.env = patch.dict(os.environ, {'PROPERTY_SOURCE': 'mock', 'AI_SERVICE_TOKEN': ''})
+        self.env.start()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
 
     async def asyncTearDown(self):
         await self.client.aclose()
+        self.env.stop()
 
     async def test_health_without_api_key(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -88,13 +90,9 @@ class ChatTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 503)
         self.assertNotIn('private provider details', response.text)
 
-    @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key', 'PROPERTY_SOURCE': 'backend'})
+    @patch.dict(os.environ, {'GEMINI_API_KEY': 'test-key'})
     @patch('app.gemini_service.genai.Client', return_value=FakeGemini())
     async def test_booking_tool_returns_structured_results_and_errors(self, client):
-        async def agency(): return '00000000-0000-4000-8000-000000000001'
-        app.dependency_overrides[optional_request_agency] = agency
-        self.addCleanup(app.dependency_overrides.clear)
-        self.client.headers['Authorization'] = 'Bearer test'
         data = {'property_id': '8da5d667-a895-42ac-bcb8-3de773c80179',
                 'date': '2026-11-01', 'slots': []}
         with patch('app.gemini_service.fetch_availability', return_value=data):

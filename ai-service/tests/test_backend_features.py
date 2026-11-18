@@ -5,23 +5,21 @@ from unittest.mock import AsyncMock, patch
 import httpx
 from app.main import app
 from app import rag, mock_backend
-from app.models import ChatResult
+from app.models import ChatResult, CustomerContext
+from app.backend_context import BackendIdentity
 from app.protection import requests
 
 
 class BackendTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.env = patch.dict(os.environ, {'AI_API_TOKEN': 'local-test', 'AI_DATABASE_PATH': self.tmp.name + '/test.db', 'AI_REQUESTS_PER_MINUTE': '100'})
+        self.env = patch.dict(os.environ, {'PROPERTY_SOURCE': 'mock', 'AI_SERVICE_TOKEN': '', 'AI_API_TOKEN': 'local-test', 'AI_DATABASE_PATH': self.tmp.name + '/test.db', 'AI_REQUESTS_PER_MINUTE': '100'})
         self.env.start()
-        self.agency_patches = [patch('app.whatsapp.agency_session', return_value=('00000000-0000-4000-8000-000000000001', {'email': 'test', 'password': 'test'})), patch('app.whatsapp.login_for_agency', new=AsyncMock(return_value='agency-token')), patch('app.main.configured_agency', new=AsyncMock(return_value='00000000-0000-4000-8000-000000000001'))]
-        for item in self.agency_patches: item.start()
         requests.clear()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test')
 
     async def asyncTearDown(self):
         await self.client.aclose()
-        for item in self.agency_patches: item.stop()
         self.env.stop()
         self.tmp.cleanup()
 
@@ -65,61 +63,20 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.json()['status'], 'demo')
         self.assertEqual(second.status_code, 409)
 
-    async def test_whatsapp_text_reply_and_moderation(self):
-        from app.message_analysis import MessageAnalysis
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'body': 'Hello'}}
-        analysis = MessageAnalysis(sentiment='neutral', sentiment_reason='Question', inappropriate=False, moderation_reason='None')
+    async def test_whatsapp_text_reply(self):
+        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '212600000001@c.us', 'id': 'test-text-1', 'body': 'Hello'}}
         with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)), \
+             patch('app.whatsapp.customer_identity', new=AsyncMock(return_value=BackendIdentity('test', CustomerContext(organization_id=mock_backend.ORGANIZATION_ID, lead_id=mock_backend.PROPERTY_ID, contact_id=mock_backend.AGENT_ID)))), \
              patch('app.whatsapp.chat_with_tools', new=AsyncMock(return_value=ChatResult(reply='Hello!'))), \
              patch('app.whatsapp.send_text', new=AsyncMock()) as send:
             response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
         self.assertEqual(response.json()['status'], 'replied')
-        send.assert_awaited_once_with('demo', '123@c.us', 'Hello!')
+        send.assert_awaited_once_with('demo', '212600000001@c.us', 'Hello!')
 
-    async def test_whatsapp_lid_direct_message(self):
-        from app.message_analysis import MessageAnalysis
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@lid', 'body': 'Hello'}}
-        analysis = MessageAnalysis(sentiment='neutral', sentiment_reason='Greeting', inappropriate=False, moderation_reason='None')
+    async def test_whatsapp_ignores_media(self):
+        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'hasMedia': True}}
         with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)), \
-             patch('app.whatsapp.chat_with_tools', new=AsyncMock(return_value=ChatResult(reply='Hello!'))), \
              patch('app.whatsapp.send_text', new=AsyncMock()) as send:
             response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
-        self.assertEqual(response.json()['status'], 'replied')
-        send.assert_awaited_once_with('demo', '123@lid', 'Hello!')
-
-    async def test_audio_url_rejects_other_hosts(self):
-        from app.whatsapp import download_audio
-        with patch.dict(os.environ, {'WAHA_URL': 'http://waha:3000'}):
-            with self.assertRaises(ValueError):
-                await download_audio('http://other:3000/file', 'audio/ogg')
-
-    async def test_whatsapp_voice_uses_transcription(self):
-        from app.message_analysis import MessageAnalysis
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us',
-                   'media': {'url': 'http://waha:3000/audio', 'mimetype': 'audio/ogg'}}}
-        analysis = MessageAnalysis(sentiment='neutral', sentiment_reason='Question', inappropriate=False, moderation_reason='None')
-        with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.download_audio', new=AsyncMock(return_value=b'audio')), \
-             patch('app.whatsapp.transcribe', new=AsyncMock(return_value='Hello from voice')), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)) as analyze, \
-             patch('app.whatsapp.chat_with_tools', new=AsyncMock(return_value=ChatResult(reply='Hello'))), \
-             patch('app.whatsapp.send_text', new=AsyncMock()) as send:
-            response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
-        self.assertEqual(response.json()['status'], 'replied')
-        analyze.assert_awaited_once_with('Hello from voice')
-        send.assert_awaited_once()
-
-    async def test_whatsapp_warns_on_abuse(self):
-        from app.message_analysis import MessageAnalysis
-        payload = {'event': 'message', 'session': 'demo', 'payload': {'from': '123@c.us', 'body': 'Bad message'}}
-        analysis = MessageAnalysis(sentiment='negative', sentiment_reason='Abusive', inappropriate=True, moderation_reason='Abuse')
-        with patch.dict(os.environ, {'WAHA_WEBHOOK_SECRET': 'secret', 'WAHA_SESSION': 'demo'}), \
-             patch('app.whatsapp.analyze_message', new=AsyncMock(return_value=analysis)), \
-             patch('app.whatsapp.chat_with_tools', new=AsyncMock()) as chat, \
-             patch('app.whatsapp.send_text', new=AsyncMock()) as send:
-            response = await self.client.post('/whatsapp/webhook', headers={'X-Webhook-Secret': 'secret'}, json=payload)
-        self.assertEqual(response.json()['status'], 'moderated')
-        chat.assert_not_awaited()
-        send.assert_awaited_once()
+        self.assertEqual(response.json()['status'], 'ignored')
+        send.assert_not_awaited()

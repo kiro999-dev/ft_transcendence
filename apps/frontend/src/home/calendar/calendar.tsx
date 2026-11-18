@@ -1,6 +1,8 @@
 // import { createRoot } from 'react-dom/client'
-import { useState } from "react"
-import { initialVisits, agentsList, portfoliosList, statusesList, activeLocations, aiEngineActive, aiEngineStatusLabel } from './mockData'
+import { useEffect, useState } from "react"
+import { apiFetch } from "../../lib/api"
+import { calendarVisit } from "./calendarVisit"
+import { activeLocations, aiEngineActive, aiEngineStatusLabel } from './mockData'
 // Keep this side-effect import while Vite processes the stylesheet.
 // @ts-ignore Vite resolves CSS imports at build time.
 import '../../index.css'
@@ -55,11 +57,35 @@ const formatWeekRange = (start: Date, end: Date) => {
   return `${startStr} – ${endStr}`
 }
   const [searchQuery, setSearchQuery] = useState("")
-  const [visits, setVisits] = useState<Visit[]>(initialVisits)
+  const [visits, setVisits] = useState<Visit[]>([])
 
   const totalDays = new Date(year, month + 1, 0).getDate()
   const startDay = new Date(year, month, 1).getDay()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, accessToken } = useAuth()
+  const [loadError, setLoadError] = useState("")
+  const weekKey = weekStart.toISOString()
+
+  useEffect(() => {
+    if (!accessToken) return
+    let cancelled = false
+    async function load() {
+      try {
+        const response = await apiFetch('/internal/ai/visits')
+        if (!response.ok) throw new Error('Could not load visits')
+        const rows = await response.json()
+        if (!cancelled) {
+          const mapped = rows.map((row: Parameters<typeof calendarVisit>[0]) => calendarVisit(row, new Date(weekKey)))
+          setVisits(mapped.filter((visit: Visit) => visit.day >= 0 && visit.day < 7 && visit.status !== 'CANCELLED'))
+          setLoadError("")
+        }
+      } catch {
+        if (!cancelled) setLoadError('Could not load visits. Please try again.')
+      }
+    }
+    load()
+    const timer = window.setInterval(load, 15000)
+    return () => { cancelled = true; window.clearInterval(timer) }
+  }, [accessToken, weekKey])
   const userName = user ? `${user.first_name} ${user.last_name}` : ""
   const userEmail = user?.email ?? ""
   const initials = userName
@@ -85,7 +111,7 @@ const formatWeekRange = (start: Date, end: Date) => {
   const confirmedCount = visits.filter((v) => v.status === "CONFIRMED" || v.status === "ACTIVE").length
 
   const hasConflict = (a: Visit, b: Visit) =>
-    a.day === b.day && a.start < b.start + b.duration && b.start < a.start + a.duration
+    a.propertyId === b.propertyId && a.day === b.day && a.start < b.start + b.duration && b.start < a.start + a.duration
 
   let conflictsCount = 0
   for (let i = 0; i < visits.length; i++) {
@@ -196,6 +222,7 @@ const formatWeekRange = (start: Date, end: Date) => {
 
           </div>
 
+          {loadError && <p className="mt-4 text-red-600">{loadError}</p>}
           <CalendarControls view={view} setView={setView} />
 
           <div className="flex gap-4 items-start">

@@ -8,6 +8,7 @@ from app.booking_client import get_availability
 PROPERTY_ID = '8da5d667-a895-42ac-bcb8-3de773c80179'
 
 
+@patch.dict('os.environ', {'AI_SERVICE_TOKEN': ''})
 class BookingTests(unittest.IsolatedAsyncioTestCase):
     async def request_with_response(self, response):
         def handle(request):

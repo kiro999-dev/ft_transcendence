@@ -5,5 +5,3 @@ httpx
 google-genai
 psycopg[binary]
 pgvector
-
-cryptography

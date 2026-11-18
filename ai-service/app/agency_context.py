@@ -4,7 +4,6 @@ import uuid
 
 import httpx
 from fastapi import HTTPException, Request
-from app.backend_auth import backend_token
 
 
 async def agency_from_token(token: str) -> str:
@@ -31,14 +30,12 @@ async def request_agency(request: Request) -> str:
     return await agency_from_token(authorization[7:].strip())
 
 
-async def configured_agency() -> str:
-    token = await backend_token()
-    if not token:
-        raise HTTPException(status_code=503, detail='Agency login is not configured.')
-    return await agency_from_token(token)
-
-
-async def optional_request_agency(request: Request) -> str | None:
-    if not request.headers.get('Authorization'):
+async def context_agency() -> str | None:
+    """Resolve the agency in the verified per-request backend context."""
+    from app.backend_context import identity
+    current = identity.get()
+    if not current or not current.token:
         return None
-    return await request_agency(request)
+    if current.customer:
+        return current.customer.organization_id
+    return await agency_from_token(current.token)

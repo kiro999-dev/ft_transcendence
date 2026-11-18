@@ -1,297 +1,84 @@
-# AI service — Phase 1 and booking availability
+# AI service: learning MVP
 
-This service uses a **demo property catalog**. Main currently has a booking
-availability endpoint, but no property search/detail or visit creation endpoint.
-A successful demo search does not mean the live agency catalog is connected.
+The goal: answer real estate questions on WhatsApp, suggest properties, book a
+confirmed visit, and show its property/time/customer phone in the owner calendar.
 
-## Run the project with Docker Compose
+Start everything with the instructions in [dk/README.md](../dk/README.md).
+You do not need to run the AI Makefile separately when using the full Docker stack.
 
-From `dk`, run `make` to start the frontend, backend, database, AI service, and WAHA. Add your Gemini API key to `dk/.env` first. The AI API is at http://localhost:8000/docs and WAHA is at http://localhost:3001. Within Docker, the AI uses `http://waha:3000` and the backend uses `http://backend:3000`.
+## Read the code in this order
 
-Open the WAHA dashboard, create or start the configured session (default `default`), and scan its QR code with WhatsApp. The global webhook sends incoming messages to the AI service. Compose defaults to the real backend and uses the local test agency credentials in the AI data volume. These credentials were created for this machine and are not provisioned automatically on other machines. Chat can search and check availability; it does not yet create appointments.
+1. `app/prompt.py`: the short sales prompt shared by chat and streaming.
+2. `app/property_client.py`: translates Gemini search filters to `GET /properties`.
+3. `app/booking_client.py`: calls backend availability and visit creation.
+4. `app/gemini_service.py`: gives Gemini three tools: property search, availability,
+   and optional agency knowledge. It returns both text and actual tool results.
+5. `app/whatsapp.py`: receives a verified WAHA message, gets the customer identity,
+   chats, shows numbered slots, and handles `BOOK` / `CONFIRM` commands.
+6. `app/booking_confirmation.py`: checks the selected property and slot again,
+   then sends a visit request with the customer's real CRM IDs.
+7. `app/conversations.py` and `app/whatsapp_state.py`: small SQLite helpers for
+   history, selected slots, and avoiding repeated replies/bookings on delivery retries.
+8. `app/backend_context.py`: keeps the backend token and customer IDs separate
+   for each request. They are not included in the model prompt.
+9. `app/main.py`: FastAPI routes; `app/models.py`: their request/response shapes.
 
-## Run locally
+The small backend integration is in
+`apps/backend/src/whatsapp-integration/whatsapp-integration.controller.ts`:
 
-### Using Docker
+- `POST /internal/ai/whatsapp/link`: owner login required; links session to agency once.
+- `POST /internal/ai/whatsapp/context`: private gateway credential required;
+  finds/creates the sender's contact/lead and returns a short-lived backend JWT.
+- `DELETE /internal/ai/whatsapp/link`: owner can remove their agency's link.
 
-Put `GEMINI_API_KEY` and `GEMINI_MODEL` in `dk/.env`. The Makefile uses that file by default; use `make run ENV_FILE=/path/to/.env` to select another file. From `ai-service`, run:
+The normal chat flow is:
 
-```sh
-make build
-make run
+```text
+WhatsApp → webhook → CRM identity → Gemini → property/availability tools → WhatsApp reply
+BOOK number → save selection → CONFIRM code → booking API → calendar
 ```
 
-Open `http://localhost:8000/docs`. The Makefile loads `../dk/.env` and connects to
-the backend on your computer at port 3000 through `host.docker.internal`.
-Restart the container after changing `.env`; rebuild after changing Python code.
-For a different backend address, use `make run BACKEND_URL=http://your-host:3000`.
+The customer never provides a JWT or internal CRM/property UUID. The owner never
+sees the conversation in the platform; they see the visit in their calendar.
+The calendar API joins the visit to its property and CRM contact to include phone.
 
-The backend and database must also run for availability checks. From the project
-root, `docker compose up -d postgres` starts PostgreSQL. The backend's documented
-dependency manager is Bun; after installing dependencies and generating its
-Prisma client, it builds with `npm run build` from `apps/backend`. Start that
-build from `apps/backend` with `node --env-file=../../.env dist/main.js`.
+## Other existing endpoints
 
-The current Docker database initialization does not create the booking tables
-in the Prisma schema (`AgentAvailability`, `CalendarException`, `Visit`, and
-`VisitStatusHistory`). Ask the booking owner for their schema setup/migration and
-test property/agent data before expecting a successful availability lookup.
+`GET /health`, `POST /chat`, `POST /chat/stream`, and saved conversation routes
+remain available. Backend-mode chat requires `Authorization: Bearer <AI_API_TOKEN>`.
+A trusted gateway can send `X-Backend-Token` and a `context` object containing
+`organization_id`, `lead_id`, and `contact_id`. A structured `booking_confirmation`
+contains the selected `property_id`, `agent_id`, `starts_at`, and
+`confirmed_by_customer: true`. The separate `/bookings` endpoint accepts those
+confirmation fields plus `context` at the top level.
 
-### Without Docker
+These routes are for application integration. WhatsApp customers use only messages
+and the confirmation commands above. Confirmed booking errors are not automatically
+retried; an uncertain response means checking the calendar before trying again.
 
-From `ai-service`:
+`PROPERTY_SOURCE=mock` and `app/mock_backend.py` are local demos. Compose uses
+`PROPERTY_SOURCE=backend`. The booking confirmation currently supports 30-minute
+slots. Use valid future dates and configured agent working hours.
 
-```sh
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-export GEMINI_API_KEY='your-key'
-.venv/bin/uvicorn app.main:app --reload
-```
-
-Optionally set `GEMINI_MODEL`; the default is `gemini-flash-latest`.
-`GET /health` checks that FastAPI is running, not whether Gemini is reachable.
-Use `http://localhost:8000/docs` to try `POST /chat`.
-
-Request:
-
-```json
-{"message": "Show villas in Marrakech under 2000000 MAD"}
-```
-
-The response keeps `message_received` and `reply`, and adds `properties` and
-`property_source: "mock"`. `properties` contains the actual records returned by
-search tools during that request, not JSON invented by the model. It can include
-results from several searches. An ordinary greeting or an empty search returns
-an empty list.
-
-## How the code works
-
-1. `main.py` receives and validates the message.
-2. `gemini_service.py` sends it to Gemini with a Python search function as a tool.
-3. Gemini can call that function; it searches `property_mock.py`.
-4. The function saves the returned properties in a dictionary for this request.
-5. Gemini writes the reply, and FastAPI returns the reply plus those properties.
-
-The nested search function lets each request keep its own results. Its dictionary
-uses property IDs as keys so repeated searches do not create duplicate cards.
-The Google SDK handles calling the function and sending its result back to the
-model: https://googleapis.github.io/python-genai/#function-calling
-
-Blank/oversized messages return 422. Missing configuration, provider failures,
-timeouts or unfinished model answers return 503. Logs record counts and error
-types without logging chat text, keys or full provider error messages.
+Agency knowledge uses the separate RAG database described below. Without agency documents, the assistant must not invent agency policy answers.
 
 ## Tests
 
 ```sh
-.venv/bin/python -m unittest discover -s tests -v
+# From dk, after the stack starts:
+docker compose exec -T ai-service python -m unittest discover -s tests -q
 ```
 
-Tests substitute Gemini to avoid spending API credits. A real Gemini call and
-live backend integration still need to be tested with configured services.
+Tests simulate the model and WhatsApp sends. The separate
+`scripts/smoke_whatsapp.py` checks the real backend integration without sending
+messages to a phone. A real WhatsApp conversation still needs QR pairing and a
+working Gemini API key.
 
-## Findings for teammates (their code was not edited)
+## Agency knowledge (RAG)
 
-At main commit `6eaaa20`:
-
-- Only `POST /internal/ai/availability` exists for the AI integration. Property
-  search/details and `POST /internal/ai/visits` from the PDF are missing.
-- The booking controller has no authentication/organization guard, and no global
-  guard is registered. The service finds the property by its ID alone.
-- The booking service accepts `timezone` but builds UTC day boundaries instead.
-- Conflict queries only fetch records starting that day. A visit or exception
-  starting the previous day and overlapping today's availability can be missed.
-- The service picks the organization's first owner as the agent; confirm whether
-  this is the intended assignment rule.
-
-## Phase 4: booking integration status
-
-`booking_client.py` calls the real `POST /internal/ai/availability` endpoint via
-HTTPX. Gemini can use it when the customer supplies a real property UUID and an
-explicit date. Mock IDs such as `prop-1` are rejected before making a request.
-The chat response includes `availability` (backend results) and `tool_errors`
-(failed lookups). Empty slots mean no availability; errors mean we could not check.
-
-Set `BACKEND_URL` to the backend address (default `http://localhost:3000`). In
-Docker, localhost means the AI container itself: use the reachable backend host.
-Optional `AI_SERVICE_TOKEN` and `AI_ORGANIZATION_ID` are forwarded as the contract
-headers. The current backend does not enforce them yet; its owner must add that
-before exposing this integration to multiple agencies.
-
-Try a chat message like: `Check visits for property <real UUID> on 2026-11-01`.
-Start the backend with its database and actual agent availability records first.
-
-**Phase 4 is incomplete:** visit creation, conflict handling on reservation, and
-confirmed bookings need the missing `POST /internal/ai/visits` endpoint. CRM lead
-and contact IDs also need their owner's integration. No booking creation tool is
-exposed yet, and the assistant is told to refer confirmation to a human agent.
-The timezone and conflict findings above also need fixes by the booking owner.
-
-
-## Preparing real property search
-
-The default `PROPERTY_SOURCE=mock` keeps the demo catalog. The new
-`app/property_client.py` prepares the contract's
-`POST /internal/ai/properties/search`. Once your teammate provides that endpoint
-and trusted service credentials, set `PROPERTY_SOURCE=backend`, `BACKEND_URL`,
-`AI_SERVICE_TOKEN`, and `AI_ORGANIZATION_ID` in the server environment.
-The current `main` has authenticated `GET /properties` routes instead; they do
-not yet match the agreed search contract. Backend mode reports an error if the
-contract endpoint is unavailable and never silently substitutes demo listings.
-Booking creation is not implemented: the teammate's visit endpoint and trusted
-customer identity flow are still needed before it can safely be connected.
-
-## Conversation history
-
-`POST /chat` accepts an optional `history` list. The caller sends earlier
-messages in order, for example:
-
-```json
-{"message":"Marrakech", "history":[
-  {"role":"user", "content":"I want a villa"},
-  {"role":"assistant", "content":"Which city?"}
-]}
-```
-
-The AI service sends those messages to Gemini before the new message. It does
-not save them: the caller must keep and resend them. A request can include up to
-20 previous messages. Only pass history belonging to the current conversation.
-This is not persistent conversation storage. `/chat` waits for the complete
-answer; `/chat/stream` streams Gemini text and tool results as described below.
-
-## Message analysis
-
-`POST /analyze` accepts `{"message": "I am frustrated"}` and asks Gemini for
-positive/neutral/negative sentiment, short reasons, and an inappropriate-content
-flag. This is a separate endpoint: it does not automatically moderate `/chat`,
-store results, or send them to CRM. The result is an estimate for an agent to
-review, not a final decision. Gemini errors return 503.
-
-## Streaming chat
-
-`POST /chat/stream` accepts the same JSON as `/chat` and returns server-sent
-events. `text` events contain pieces of the answer, `tool` events contain
-property or availability results, `done` marks success, and `error` reports a
-failure. A stream can fail after the HTTP response has started, so clients must
-read the events and not rely only on the HTTP status.
-
-Example from another terminal:
-
-```sh
-curl -N http://localhost:8000/chat/stream \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"Show villas in Marrakech"}'
-```
-
-This endpoint and `/chat` both accept caller-supplied history; neither stores it.
-Streaming uses the same mock or backend property setting and does not create
-bookings. The frontend must collect text chunks and display tool results.
-
-## Backend features and setup
-
-These features are in development and use a **single configured agency**.
-They are not yet a finished multi-tenant deployment. Do not expose them publicly
-until authentication, tenant isolation, and webhook retries are agreed with the
-team and tested. All commands below are run from `ai-service`.
-
-### Saved conversations
-
-Set `AI_API_TOKEN` to a private value in the project-root `.env`. Send it as
-`Authorization: Bearer <AI_API_TOKEN>` to:
-
-- `POST /conversations` creates a conversation and returns its ID.
-- `GET /conversations/{id}` returns its saved messages.
-- `POST /conversations/{id}/messages` accepts `{"message":"Hello"}` and saves
-  the message and successful reply. The last 20 messages are sent to Gemini.
-
-The simple SQLite database belongs to the AI service. Docker's `make run` keeps
-it in the `ai_service_data` volume at `/app/data`; outside Docker it lives in
-`data/conversations.db` unless `AI_DATABASE_PATH` is set. Back up the volume if
-needed. The shared token protects all conversations equally; it does not yet
-provide per-user/agency authorization. Concurrent messages to one conversation
-are not serialized, so send them one at a time.
-
-Chat, streaming, analysis, knowledge and conversation requests have a simple
-per-process limit (default 30 per minute per client IP). Change it with
-`AI_REQUESTS_PER_MINUTE`. It is for development: multiple workers have separate
-counters and a proxy may make all users share an IP.
-
-### Local property and booking mock
-
-Start the demo backend in a separate terminal:
-
-```sh
-.venv/bin/uvicorn app.mock_backend:app --host 0.0.0.0 --port 3001
-```
-
-This is in-memory test data, not a real property or appointment. It resets when
-restarted. To use its search from the AI container, put these development values
-in the root `.env`:
-
-```text
-PROPERTY_SOURCE=backend
-AI_SERVICE_TOKEN=demo-token
-AI_ORGANIZATION_ID=demo-agency
-BOOKING_ENABLED=true
-```
-
-Run `make run BACKEND_URL=http://host.docker.internal:3001`. The mock property ID
-is `11111111-1111-4111-8111-111111111111`, agent ID is
-`22222222-2222-4222-8222-222222222222`, and its demo slot is
-`2026-11-10T10:00:00+01:00`. Use valid UUIDs for test lead and contact IDs.
-The authenticated `POST /bookings` accepts those IDs, `starts_at`, and
-`confirmed_by_customer: true`. A successful response says `status: demo`; it
-is not a real booking. The customer must explicitly choose and confirm the
-slot before this endpoint is called. The chatbot itself does not create visits.
-
-For the real backend, leave `BOOKING_ENABLED` off until the booking owner agrees
-on authentication and confirms their endpoint. If a booking request times out,
-check with the agency before retrying: the booking may have been created.
-
-### RAG: agency knowledge
-
-`cd dk && make` starts a separate pgvector database for AI knowledge and enables
-RAG in the AI service. Configure `GEMINI_API_KEY`, `AI_API_TOKEN`, and
-`AI_RAG_PASSWORD` in `dk/.env` before starting. Knowledge data is stored in
-the `ai_rag_data` Docker volume; `make fclean` deletes the volume.
-
-Send `Authorization: Bearer <backend access token>` with requests to
-`POST /knowledge/documents` (JSON `title` and `text`) to add agency information.
-`POST /knowledge/ask` (JSON `question`) searches only that agency's documents.
-The backend verifies the token through `/users/me`; callers cannot select an
-organization by sending an ID. Gemini receives document text to create embeddings
-and relevant excerpts to answer questions. Only upload trusted information.
-
-Each registered WhatsApp session uses its agency's knowledge. Existing knowledge
-chunks created before agency isolation have no organization and are not returned;
-an administrator must explicitly assign them before using them.
-
-
-### WhatsApp sessions
-
-Compose runs WAHA and configures the webhook. Each agency must register its own
-session by calling the AI service with its backend user access token:
-
-- `POST /whatsapp/session` with JSON `email` and `password` for a dedicated backend
-  account belonging to the same agency. This verifies that account and starts the
-  agency's WAHA session. Use a dedicated account without two-factor login: the AI
-  logs in automatically, and backend login rotates that account's refresh token.
-- `GET /whatsapp/session` returns the agency's session status.
-- `GET /whatsapp/session/qr` returns its QR image when pairing is required.
-- `POST /whatsapp/session/start`, `/restart`, or `/stop` controls that session.
-
-All these calls require `Authorization: Bearer <backend access token>` for a
-user of the agency. The session name is assigned by the AI service. Incoming
-messages from unregistered sessions are ignored. The platform still needs UI
-code to call these endpoints and show the QR image.
-
-The service encrypts agency service-account credentials in its SQLite volume.
-`dk/Makefile` creates `AI_SESSION_ENCRYPTION_KEY` in `dk/.env` on first run;
-keep that key with the AI data volume or the stored credentials cannot be read.
-The global WAHA webhook uses `WAHA_WEBHOOK_SECRET`. Existing test sessions made
-before this mapping need an explicit administrator migration or registration.
-The current booking flow remains limited to the configured test agency and test
-contact; new agency sessions can search properties, availability and knowledge.
-
-The webhook does not yet deduplicate retries or guarantee ordering. Voice
-messages are transcribed by Gemini, and replies are text.
+Compose starts an AI-owned pgvector database. `make setup` creates its local
+password. The knowledge endpoints use a backend agency JWT in the Authorization
+header; upload JSON `title` and `text` to `POST /knowledge/documents`, and ask
+with JSON `question` at `POST /knowledge/ask`. Documents are isolated by agency.
+The WhatsApp agent uses the linked customer's agency to retrieve knowledge.
+Pre-existing unassigned chunks are not returned. Never put secrets in documents.

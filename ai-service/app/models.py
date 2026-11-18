@@ -8,9 +8,44 @@ class ChatMessage(BaseModel):
     content: str = Field(min_length=1, max_length=4000)
 
 
+class CustomerContext(BaseModel):
+    organization_id: str
+    lead_id: str
+    contact_id: str
+
+    @field_validator('organization_id', 'lead_id', 'contact_id')
+    @classmethod
+    def valid_uuid(cls, value: str) -> str:
+        from uuid import UUID
+        return str(UUID(value))
+
+
+class BookingConfirmation(BaseModel):
+    property_id: str
+    agent_id: str
+    starts_at: datetime
+    confirmed_by_customer: Literal[True]
+    customer_notes: Optional[str] = Field(default=None, max_length=1000)
+
+    @field_validator('property_id', 'agent_id')
+    @classmethod
+    def valid_uuid(cls, value: str) -> str:
+        from uuid import UUID
+        return str(UUID(value))
+
+    @field_validator('starts_at')
+    @classmethod
+    def timezone_required(cls, value: datetime) -> datetime:
+        if value.utcoffset() is None:
+            raise ValueError('Timezone is required')
+        return value
+
+
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     history: list[ChatMessage] = Field(default_factory=list, max_length=20)
+    context: Optional[CustomerContext] = None
+    booking_confirmation: Optional[BookingConfirmation] = None
 
     @field_validator("message")
     @classmethod
@@ -69,30 +104,12 @@ class ChatResult(BaseModel):
     availability: list[Availability] = Field(default_factory=list)
     tool_errors: list[str] = Field(default_factory=list)
     knowledge_sources: list[dict] = Field(default_factory=list)
+    booking: Optional[dict] = None
 
 
 class ChatResponse(ChatResult):
     message_received: str
 
 
-class BookingRequest(BaseModel):
-    lead_id: str
-    contact_id: str
-    property_id: str
-    agent_id: str
-    starts_at: datetime
-    customer_notes: Optional[str] = Field(default=None, max_length=1000)
-    confirmed_by_customer: Literal[True]
-
-    @field_validator('lead_id', 'contact_id', 'property_id', 'agent_id')
-    @classmethod
-    def valid_uuid(cls, value: str) -> str:
-        from uuid import UUID
-        return str(UUID(value))
-
-    @field_validator('starts_at')
-    @classmethod
-    def timezone_required(cls, value: datetime) -> datetime:
-        if value.utcoffset() is None:
-            raise ValueError('Timezone is required')
-        return value
+class BookingRequest(BookingConfirmation):
+    context: CustomerContext

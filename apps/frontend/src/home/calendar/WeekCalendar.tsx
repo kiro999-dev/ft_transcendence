@@ -5,6 +5,8 @@ export interface ChecklistItem {
 
 export interface Visit {
   id: string
+  startsAt?: string
+  propertyId?: string
   day: number
   start: number
   duration: number
@@ -18,18 +20,18 @@ export interface Visit {
   address: string
   note: string
   assignedAgent: string
-  agentRole: string
-  agentOnSite: boolean
-  transitMinutes: number
-  propertyImage: string
-  propertyPrice: string
-  propertyRef: string
-  accessCode: string
-  conciergeName: string
-  checklist: ChecklistItem[]
-  chauffeur: string
-  iotPassStatus: string
-  feedbackTriggerStatus: string
+  agentRole?: string
+  agentOnSite?: boolean
+  transitMinutes?: number
+  propertyImage?: string
+  propertyPrice?: string
+  propertyRef?: string
+  accessCode?: string
+  conciergeName?: string
+  checklist?: ChecklistItem[]
+  chauffeur?: string
+  iotPassStatus?: string
+  feedbackTriggerStatus?: string
 }
 
 interface WeekCalendarProps {
@@ -109,7 +111,7 @@ function WeekCalendar({ visits, weekDates, onVisitClick }: WeekCalendarProps) {
         ))}
 
         {/* VISITS */}
-        {visits.map((visit) => (
+        {visits.filter(visit => visit.day >= 0 && visit.day < 7).map((visit) => (
           <div
             key={visit.id}
             onClick={() => onVisitClick(visit)}

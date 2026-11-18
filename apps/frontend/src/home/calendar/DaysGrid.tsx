@@ -1,4 +1,3 @@
-import React from "react"
 
 interface DaysGridProps{
     year:number;
@@ -9,7 +8,7 @@ interface DaysGridProps{
     setSelectedDay: (day: number) => void;
 }
 
-function DaysGrid({ year, month, totalDays, startDay, selectedDay, setSelectedDay}: DaysGridProps) {
+function DaysGrid({ totalDays, startDay, selectedDay, setSelectedDay}: DaysGridProps) {
     const emptyDays = Array(startDay).fill(null);
     const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     const daysarray = Array.from({ length: totalDays }, (_, index) => index + 1)
@@ -18,8 +17,8 @@ function DaysGrid({ year, month, totalDays, startDay, selectedDay, setSelectedDa
         <>
         <div className="text-center text-sm font-semibold text-gray-400 pb-2">
         <div className="grid grid-cols-7">
-                {weekDays.map((cell, index) => (
-                    <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{cell}</div>
+                {weekDays.map((cell) => (
+                    <div key={cell} className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{cell}</div>
                 ))}
         </div>
         </div>
