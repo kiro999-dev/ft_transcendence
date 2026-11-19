@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "reset_token_expires_at" timestamptz,
 
     -- 2FA
+    "google_id" text,
     "two_fa" boolean NOT NULL DEFAULT false,
     "otp_hash" text,
     "otp_expires_at" timestamptz,
