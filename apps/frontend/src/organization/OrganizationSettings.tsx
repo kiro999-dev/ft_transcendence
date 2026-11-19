@@ -2,23 +2,11 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../auth/AuthContext";
 import { apiFetch } from "../lib/api";
-import type {Role,OrgMember,NewMemberForm} from "./organization_types"
-import {ROLE_LABELS,roleBadgeStyle,ROLE_OPTIONS} from "./organization_types"
-
-
-const Spinner = () => (
-  <div className="flex items-center justify-center py-16">
-    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
-  </div>
-);
-
-const RoleBadge = ({ role }: { role: Role }) => (
-  <span
-    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadgeStyle[role]}`}
-  >
-    {ROLE_LABELS[role] ?? role}
-  </span>
-);
+import type { Role, OrgMember, NewMemberForm } from "./organization_types";
+import { ROLE_OPTIONS } from "./organization_types";
+import { Spinner } from "./componenets/Spinner";
+import { RoleBadge } from "./componenets/RoleBadge";
+import { OrganizationNameCard } from "./componenets/OrganizationNameCard";
 
 const Initials = ({
   firstName,
@@ -31,130 +19,6 @@ const Initials = ({
     {(firstName?.[0] ?? "") + (lastName?.[0] ?? "")}
   </div>
 );
-
-
-const OrganizationNameCard = ({
-  name,
-  canEdit,
-  accessToken,
-  onSaved,
-}: {
-  name: string;
-  canEdit: boolean;
-  accessToken: string | null;
-  onSaved: (name: string) => void;
-}) => {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(name);
-  const [error, setError] = useState<string>();
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => setValue(name), [name]);
-
-  const startEdit = () => {
-    setValue(name);
-    setError(undefined);
-    setEditing(true);
-  };
-
-  const handleSave = async () => {
-    const trimmed = value.trim();
-    if (trimmed.length < 2) {
-      setError("Agency name must be at least 2 characters");
-      return;
-    }
-    if (trimmed.length > 150) {
-      setError("Agency name must be at most 150 characters");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const res = await apiFetch("/organization/us", {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ organizationName: trimmed }),
-      });
-
-      if (!res.ok) {
-        toast.error("Could not update the agency name");
-        return;
-      }
-
-      onSaved(trimmed);
-      setEditing(false);
-      toast.success("Agency name updated");
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
-      <h2 className="text-lg font-bold text-slate-900">Agency name</h2>
-      <p className="mt-1 text-sm text-slate-600">
-        This is the name your team and clients see.
-      </p>
-
-      <div className="mt-5">
-        {editing ? (
-          <div>
-            <input
-              autoFocus
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className={`w-full max-w-sm rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:outline-none focus:ring-2 ${
-                error
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                  : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
-              }`}
-            />
-            {error && (
-              <p role="alert" className="mt-1.5 text-xs text-red-600">
-                {error}
-              </p>
-            )}
-
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-              <button
-                onClick={() => setEditing(false)}
-                disabled={saving}
-                className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <p className="text-base font-semibold text-slate-900">{name}</p>
-            {canEdit && (
-              <button
-                onClick={startEdit}
-                className="text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700"
-              >
-                Edit
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 
 const AddMemberModal = ({
   accessToken,
@@ -173,11 +37,13 @@ const AddMemberModal = ({
     password: "",
     role: "staff",
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof NewMemberForm, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof NewMemberForm, string>>
+  >({});
   const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -193,7 +59,7 @@ const AddMemberModal = ({
     return next;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const next = validate();
@@ -235,7 +101,11 @@ const AddMemberModal = ({
           Invite a new member to your agency.
         </p>
 
-        <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-4">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="mt-6 flex flex-col gap-4"
+        >
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -252,7 +122,9 @@ const AddMemberModal = ({
                 }`}
               />
               {errors.firstName && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.firstName}</p>
+                <p className="mt-1.5 text-xs text-red-600">
+                  {errors.firstName}
+                </p>
               )}
             </div>
 
@@ -291,7 +163,9 @@ const AddMemberModal = ({
                   : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
               }`}
             />
-            {errors.email && <p className="mt-1.5 text-xs text-red-600">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1.5 text-xs text-red-600">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -310,7 +184,9 @@ const AddMemberModal = ({
                   : "border-slate-300 focus:border-blue-600 focus:ring-blue-600/20"
               }`}
             />
-            {errors.phone && <p className="mt-1.5 text-xs text-red-600">{errors.phone}</p>}
+            {errors.phone && (
+              <p className="mt-1.5 text-xs text-red-600">{errors.phone}</p>
+            )}
           </div>
 
           <div>
@@ -373,10 +249,6 @@ const AddMemberModal = ({
   );
 };
 
-/* ------------------------------------------------------------------ */
-/* Team members card                                                   */
-/* ------------------------------------------------------------------ */
-
 const TeamMembersCard = ({
   members,
   currentUserId,
@@ -436,7 +308,7 @@ const TeamMembersCard = ({
 
   const handleRemove = async (member: OrgMember) => {
     const confirmed = window.confirm(
-      `Remove ${member.first_name} ${member.last_name} from your agency?`
+      `Remove ${member.first_name} ${member.last_name} from your agency?`,
     );
     if (!confirmed) return;
 
@@ -462,89 +334,121 @@ const TeamMembersCard = ({
   };
 
   return (
-    <div className="mt-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Team members</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            People with access to your agency's workspace.
-          </p>
-        </div>
-
-        {canAdd && (
-          <button
-            onClick={onAddClick}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-          >
-            Add member
-          </button>
-        )}
+  <div className="mt-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900">Team members</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          People with access to your agency's workspace.
+        </p>
       </div>
 
-      <div className="mt-6 divide-y divide-slate-100 border-y border-slate-100">
-        {members.map((member) => {
-          const isSelf = member.id === currentUserId;
-
-          return (
-            <div
-              key={member.id}
-              className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <Initials firstName={member.first_name} lastName={member.last_name} />
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {member.first_name} {member.last_name}
-                    {isSelf && (
-                      <span className="ml-1.5 text-xs font-normal text-slate-400">
-                        (you)
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {canChangeRole(member) ? (
-                  <select
-                    value={member.role}
-                    onChange={(e) => handleRoleChange(member, e.target.value as Role)}
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
-                  >
-                    {ROLE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <RoleBadge role={member.role} />
-                )}
-
-                {canRemoveMember(member) && (
-                  <button
-                    onClick={() => handleRemove(member)}
-                    disabled={removingId === member.id}
-                    className="text-sm font-medium text-red-600 transition-colors hover:text-red-700 disabled:opacity-50"
-                  >
-                    {removingId === member.id ? "Removing..." : "Remove"}
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {members.length === 0 && (
-          <p className="py-8 text-center text-sm text-slate-500">
-            No team members yet.
-          </p>
-        )}
-      </div>
+      {canAdd && (
+        <button
+          onClick={onAddClick}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+        >
+          Add member
+        </button>
+      )}
     </div>
-  );
-};
 
+    <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200">
+      <table className="min-w-full divide-y divide-slate-200">
+        <thead className="bg-slate-50">
+          <tr>
+            <th
+              scope="col"
+              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              Member
+            </th>
+            <th
+              scope="col"
+              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              Role
+            </th>
+            <th scope="col" className="px-4 py-3 text-right">
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {members.map((member) => {
+            const isSelf = member.id === currentUserId;
+
+            return (
+              <tr key={member.id}>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Initials
+                      firstName={member.first_name}
+                      lastName={member.last_name}
+                    />
+                    <p className="text-sm font-semibold text-slate-900">
+                      {member.first_name} {member.last_name}
+                      {isSelf && (
+                        <span className="ml-1.5 text-xs font-normal text-slate-400">
+                          (you)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </td>
+
+                <td className="px-4 py-3">
+                  {canChangeRole(member) ? (
+                    <select
+                      value={member.role}
+                      onChange={(e) =>
+                        handleRoleChange(member, e.target.value as Role)
+                      }
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
+                    >
+                      {ROLE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <RoleBadge role={member.role} />
+                  )}
+                </td>
+
+
+                <td className="px-4 py-3 text-right">
+                  {canRemoveMember(member) && (
+                    <button
+                      onClick={() => handleRemove(member)}
+                      disabled={removingId === member.id}
+                      className="text-sm font-medium text-red-600 transition-colors hover:text-red-700 disabled:opacity-50"
+                    >
+                      {removingId === member.id ? "Removing..." : "Remove"}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+          {members.length === 0 && (
+            <tr>
+              <td
+                colSpan={3}
+                className="py-8 text-center text-sm text-slate-500"
+              >
+                No team members yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+};
 
 export const OrgSettings = () => {
   const { accessToken, user } = useAuth();
@@ -617,7 +521,7 @@ export const OrgSettings = () => {
               }
               onRoleChanged={(id, role) =>
                 setMembers((prev) =>
-                  prev.map((m) => (m.id === id ? { ...m, role } : m))
+                  prev.map((m) => (m.id === id ? { ...m, role } : m)),
                 )
               }
             />
