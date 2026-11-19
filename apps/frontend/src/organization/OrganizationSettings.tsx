@@ -1,54 +1,10 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAuth } from "../../auth/AuthContext";
-import { apiFetch } from "../../lib/api";
+import { useAuth } from "../auth/AuthContext";
+import { apiFetch } from "../lib/api";
+import type {Role,OrgMember,NewMemberForm} from "./organization_types"
+import {ROLE_LABELS,roleBadgeStyle,ROLE_OPTIONS} from "./organization_types"
 
-/* ------------------------------------------------------------------ */
-/* Types                                                               */
-/* ------------------------------------------------------------------ */
-
-type Role = "owner" | "moderator" | "staff";
-
-interface OrgMember {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  role: Role;
-}
-
-interface NewMemberForm {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  password: string;
-  role: Role;
-}
-
-// Labels for every role (used for display, including the owner badge).
-const ROLE_LABELS: Record<Role, string> = {
-  owner: "Owner",
-  moderator: "Moderator",
-  staff: "Staff",
-};
-
-// Roles that can be assigned from a dropdown. "owner" is intentionally excluded.
-const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: "moderator", label: ROLE_LABELS.moderator },
-  { value: "staff", label: ROLE_LABELS.staff },
-];
-
-const roleBadgeStyle: Record<Role, string> = {
-  owner: "bg-blue-50 text-blue-400",
-  moderator: "bg-amber-50 text-amber-700",
-  staff: "bg-slate-100 text-slate-600",
-};
-
-/* ------------------------------------------------------------------ */
-/* Small shared pieces                                                 */
-/* ------------------------------------------------------------------ */
 
 const Spinner = () => (
   <div className="flex items-center justify-center py-16">
@@ -76,9 +32,6 @@ const Initials = ({
   </div>
 );
 
-/* ------------------------------------------------------------------ */
-/* Organization name card                                              */
-/* ------------------------------------------------------------------ */
 
 const OrganizationNameCard = ({
   name,
@@ -202,9 +155,6 @@ const OrganizationNameCard = ({
   );
 };
 
-/* ------------------------------------------------------------------ */
-/* Add member modal                                                    */
-/* ------------------------------------------------------------------ */
 
 const AddMemberModal = ({
   accessToken,
@@ -551,7 +501,6 @@ const TeamMembersCard = ({
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-slate-500">{member.email}</p>
                 </div>
               </div>
 
@@ -596,9 +545,6 @@ const TeamMembersCard = ({
   );
 };
 
-/* ------------------------------------------------------------------ */
-/* Page                                                                 */
-/* ------------------------------------------------------------------ */
 
 export const OrgSettings = () => {
   const { accessToken, user } = useAuth();
