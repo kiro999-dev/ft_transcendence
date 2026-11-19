@@ -1,3 +1,5 @@
+dk/.env
+dk/.env
 .env
-.vscode
-node_modules
+__pycache__/
+*.pyc

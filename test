@@ -1,0 +1,152 @@
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw, SlidersHorizontal, X } from "lucide-react";
+import { cancelVisit, fetchVisits, rescheduleVisit } from "./bookingApi";
+import type { Visit } from "./bookingApi";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const HOURS = Array.from({ length: 11 }, (_, index) => index + 8);
+const CALENDAR_COLUMNS = "64px repeat(7, minmax(104px, 1fr))";
+
+const getMonday = (value: Date) => {
+  const result = new Date(value);
+  const day = result.getDay();
+  result.setDate(result.getDate() - (day === 0 ? 6 : day - 1));
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
+const dateKey = (value: Date) => value.toISOString().slice(0, 10);
+const formatDate = (value: Date | string) => new Date(value).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+const formatTime = (value: Date | string) => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const isCancelled = (status: string) => status.toLowerCase() === "cancelled";
+
+type CalendarDay = { date: Date; key: string; visits: Visit[] };
+
+type VisitDetailsProps = {
+  visit: Visit;
+  busy: boolean;
+  onClose: () => void;
+  onCancel: () => void;
+  onReschedule: (value: string) => void;
+};
+
+export const Booking = () => {
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [week, setWeek] = useState(() => getMonday(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
+  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const loadVisits = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setVisits(await fetchVisits());
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load visits");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadVisits();
+  }, []);
+
+  const days = useMemo<CalendarDay[]>(() => Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(week);
+    date.setDate(week.getDate() + index);
+    const key = dateKey(date);
+    return { date, key, visits: visits.filter((visit) => visit.startAt.slice(0, 10) === key) };
+  }), [visits, week]);
+
+  const filteredVisits = visits.filter((visit) => statusFilter === "all" || visit.status.toLowerCase() === statusFilter.toLowerCase());
+  const count = (status: string) => visits.filter((visit) => visit.status.toLowerCase() === status.toLowerCase()).length;
+
+  const moveWeek = (amount: number) => {
+    const nextWeek = new Date(week);
+    nextWeek.setDate(nextWeek.getDate() + amount * 7);
+    setWeek(nextWeek);
+    setSelectedDate(dateKey(nextWeek));
+  };
+
+  const handleCancel = async (id: string) => {
+    if (!window.confirm("Cancel this visit?")) return;
+    setBusy(true);
+    try {
+      await cancelVisit(id);
+      await loadVisits();
+      setSelectedVisit(null);
+    } catch (cancelError) {
+      setError(cancelError instanceof Error ? cancelError.message : "Unable to cancel visit");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleReschedule = async (id: string, value: string) => {
+    if (!value) return;
+    setBusy(true);
+    try {
+      await rescheduleVisit(id, new Date(value).toISOString());
+      await loadVisits();
+    } catch (rescheduleError) {
+      setError(rescheduleError instanceof Error ? rescheduleError.message : "Unable to reschedule visit");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] p-4 text-slate-900 sm:p-8">
+      <div className="mx-auto max-w-[1440px] space-y-5">
+        <header className="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+          <div>
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <span>Scheduling & Agent Dispatch</span><span className="text-slate-300">•</span><span className="text-blue-600">Real-Time Visit Calendar</span>
+            </div>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">Calendar & Site Visits</h1>
+            <p className="mt-1 text-xs text-slate-500">Autonomous scheduling matrix and private buyer site logistics.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-1 text-xs font-medium text-slate-600">
+              <button type="button" className="rounded bg-blue-600 px-3 py-1.5 font-semibold text-white shadow-sm">Week</button>
+            </div>
+            <button type="button" onClick={() => void loadVisits()} disabled={loading} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 disabled:opacity-60">
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />{loading ? "Syncing..." : "Sync Calendar"}
+            </button>
+            <button type="button" onClick={() => setCreateOpen(true)} className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"><Plus size={15} /> Schedule New Visit</button>
+          </div>
+        </header>
+
+        {loading && <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">Loading live visit calendar...</div>}
+        {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">{error}</div>}
+
+        <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700"><CalendarDays size={14} /> All Agents ({new Set(visits.map((visit) => visit.userId)).size})</button>
+            <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"><SlidersHorizontal size={14} className="text-blue-600" /> Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="border-0 bg-transparent p-0 text-xs focus:ring-0"><option value="all">All</option><option value="confirmed">Confirmed</option><option value="pending">Pending</option><option value="cancelled">Cancelled</option></select></label>
+          </div>
+          <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3"><button type="button" title="Previous week" onClick={() => moveWeek(-1)} className="rounded-lg border border-slate-200 p-2 transition hover:border-blue-300 hover:bg-blue-50"><ChevronLeft size={16} /></button><span className="px-2 text-xs font-semibold text-slate-700">{formatDate(week)} - {formatDate(days[6]?.date ?? week)}</span><button type="button" title="Next week" onClick={() => moveWeek(1)} className="rounded-lg border border-slate-200 p-2 transition hover:border-blue-300 hover:bg-blue-50"><ChevronRight size={16} /></button><button type="button" onClick={() => { const today = new Date(); setWeek(getMonday(today)); setSelectedDate(dateKey(today)); }} className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600 transition hover:bg-blue-100 hover:text-blue-700">Today</button></div>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{[["Today's visits", count("confirmed"), "Scheduled"], ["AI auto-booked", `${visits.length ? Math.round((count("confirmed") / visits.length) * 100) : 0}%`, "Autonomous"], ["Pending approvals", count("pending"), "Requests"], ["Cancelled", count("cancelled"), "Records"]].map(([label, value, note]) => <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p><p className="mt-3 text-2xl font-bold">{value}</p><p className="mt-1 text-[11px] text-slate-500">{note} · live booking data</p></div>)}</section>
+
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.8fr)]">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm"><div className="min-w-[792px]">
+            <div className="grid border-b border-slate-200 bg-slate-50" style={{ gridTemplateColumns: CALENDAR_COLUMNS }}><div /><div className="col-span-7 grid grid-cols-7">{days.map((day) => <button type="button" key={day.key} onClick={() => setSelectedDate(day.key)} className={`border-l border-slate-200 px-2 py-3 text-center ${selectedDate === day.key ? "bg-blue-50 text-blue-700" : "text-slate-500"}`}><p className="text-[10px] font-semibold uppercase">{DAY_NAMES[day.date.getDay()].slice(0, 3)}</p><p className="text-sm font-bold">{day.date.getDate()}</p></button>)}</div></div>
+            <div className="grid" style={{ gridTemplateColumns: CALENDAR_COLUMNS }}><div className="bg-slate-50">{HOURS.map((hour) => <div key={hour} className="h-14 border-b border-r border-slate-100 pt-2 text-center text-[10px] text-slate-400">{String(hour).padStart(2, "0")}:00</div>)}</div><div className="col-span-7 grid grid-cols-7">{days.map((day) => <div key={day.key} className="relative border-r border-slate-100">{HOURS.map((hour) => <div key={hour} className="h-14 border-b border-slate-100" />)}{day.visits.filter((visit) => statusFilter === "all" || visit.status.toLowerCase() === statusFilter).map((visit) => <button type="button" key={visit.id} onClick={() => setSelectedVisit(visit)} className="absolute left-1 right-1 rounded-md border border-blue-200 bg-blue-50 p-2 text-left text-[10px] shadow-sm transition hover:border-blue-500 hover:shadow-md" style={{ top: `${Math.max(0, (new Date(visit.startAt).getHours() - 8) * 56 + new Date(visit.startAt).getMinutes() * 0.93)}px` }}><b className="uppercase text-blue-700">{visit.status}</b><span className="mt-1 block truncate font-semibold">{visit.property_id.slice(0, 8)}...</span><span className="block text-slate-500">{formatTime(visit.startAt)}</span></button>)}</div>)}</div></div></div>
+          </div>
+          <aside className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">{selectedVisit ? <VisitDetails visit={selectedVisit} busy={busy} onClose={() => setSelectedVisit(null)} onCancel={() => void handleCancel(selectedVisit.id)} onReschedule={(value) => void handleReschedule(selectedVisit.id, value)} /> : <div className="flex min-h-[420px] flex-col items-center justify-center text-center"><CalendarDays size={30} className="text-blue-500" /><h2 className="mt-3 font-semibold">Select a visit</h2><p className="mt-1 max-w-[220px] text-xs text-slate-500">{filteredVisits.length} matching visit{filteredVisits.length === 1 ? "" : "s"}. Choose an event to inspect its details.</p></div>}</aside>
+        </section>
+      </div>
+      {createOpen && <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-950/40 p-4"><div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"><div className="flex items-start justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-wider text-blue-600">Scheduling & Agent Dispatch</p><h2 className="mt-1 text-xl font-bold">Schedule New Visit</h2></div><button type="button" title="Close" onClick={() => setCreateOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={17} /></button></div><p className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">The creation endpoint requires a client contact ID that is not returned by the current leads endpoint.</p></div></div>}
+    </div>
+  );
+};
+
+function VisitDetails({ visit, busy, onClose, onCancel, onReschedule }: VisitDetailsProps) { return <><div className="flex items-start justify-between"><div><span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-blue-700">{visit.status}</span><h2 className="mt-3 text-base font-bold">Private Visit Details</h2><p className="mt-1 text-xs text-slate-500">{formatDate(visit.startAt)} · {formatTime(visit.startAt)}</p></div><button type="button" title="Close details" onClick={onClose} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"><X size={15} /></button></div><div className="mt-5 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs"><p className="font-semibold">Visit identifiers</p><p className="text-slate-600">Property: {visit.property_id}</p><p className="text-slate-600">Client: {visit.leadId}</p><p className="text-slate-600">Agent: {visit.userId}</p></div>{!isCancelled(visit.status) && <div className="mt-4 space-y-2"><label className="block text-xs font-semibold text-slate-600">Reschedule<input type="datetime-local" disabled={busy} onChange={(event) => onReschedule(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs" /></label><button type="button" disabled={busy} onClick={onCancel} className="w-full rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">Cancel Visit</button></div>}</>; }

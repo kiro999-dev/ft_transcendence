@@ -1,9 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service'
 import * as bcrypt from 'bcrypt';
 import { SignUpDto } from '../dtos/signup.dto';
 import { UpdateProfileDto } from '../dtos/updateProfile.dto';
@@ -54,12 +50,78 @@ export class UsersService {
     });
   }
 
-  async findUserbyEmail(email: string) {
-    const user = await this.prisma.users.findUnique({
-      where: { email },
-    });
-    return user;
-  }
+    constructor(private prisma: PrismaService) { }
+    //otp
+    async saveOtp(userId: string, otpData: any) {
+        await this.prisma.users.update({
+            where: {
+                id: userId
+            },
+            data: otpData
+        })
+    }
+    async incrementOtpAttempts(userId: string) {
+        const user = await this.prisma.users.findUnique({ where: { id: userId } })
+        if (!user)
+            throw new NotFoundException("User not Found")
+        const U_otp_attempts = user.otp_attempts
+        await this.prisma.users.update({
+            where: {
+                id: userId
+            },
+            data: {
+                otp_attempts: U_otp_attempts + 1
+            }
+        })
+    }
+    async clearOtp(userId:string) {
+        await this.prisma.users.update(
+            {
+                where
+                    : {
+                    id: userId
+                },
+                data:{
+                    otp_hash:null
+                }
+            })
+    }
+    async update2fa(userId:string,towfa:boolean)
+    {
+        await this.prisma.users.update({
+            where:{
+                id:userId
+            },
+            data:{
+                two_fa:towfa
+            }
+        })
+    }
+
+    async findUserbyEmail(email: string) {
+        const user = await this.prisma.users.findUnique({
+            where: { email },
+        });
+        return user
+    }
+
+    async findUserbyId(id: string) {
+        const user = await this.prisma.users.findUnique({
+            where: { id },
+        });
+        return user
+    }
+    async updateUserToken(userId: string, refreshTokenHased: string | null) {
+        await this.prisma.users.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                token_hash: refreshTokenHased,
+            },
+        });
+    }
+    async creatUserWithOrganization(SignUpdata: SignUpDto) {
 
   async findUserbyId(id: string) {
     const user = await this.prisma.users.findUnique({
@@ -158,38 +220,31 @@ export class UsersService {
       },
     });
 
-    return {
-      message: 'updated successfully',
-      success: true,
-    };
-  }
-  async listAllUsers(page = 1, limit = 20) {
-    return this.prisma.users.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true,
-        first_name: true,
-        last_name: true,
-        email: true,
-        phone: true,
-        role: true,
-        organization_id: true,
-      },
-    });
-  }
-  async deleteUser(targetId: string, requesterId: string) {
-    if (targetId === requesterId)
-      throw new BadRequestException('You cannot delete yourself');
-    const user = await this.prisma.users.findUnique({
-      where: { id: targetId },
-    });
-    if (!user) throw new NotFoundException('User not found');
-    if (user.role === 'owner')
-      throw new BadRequestException(
-        'Delete the organization instead of its owner',
-      );
-    await this.prisma.users.delete({ where: { id: targetId } });
-    return { message: 'User has been deleted' };
-  }
+        return {
+            message: "updated successfully",
+            success: true
+        }
+    }
+    async listAllUsers(page = 1, limit = 20) {
+        return this.prisma.users.findMany({
+            skip: (page - 1) * limit,
+            take: limit,
+            select: {
+                id: true, first_name: true, last_name: true,
+                email: true, phone: true, role: true, organization_id: true,
+            },
+        });
+    }
+    async deleteUser(targetId: string, requesterId: string) {
+        if (targetId === requesterId)
+            throw new BadRequestException('You cannot delete yourself');
+        const user = await this.prisma.users.findUnique({ where: { id: targetId } });
+        if (!user) throw new NotFoundException('User not found');
+        if (user.role === 'owner')
+            throw new BadRequestException('Delete the organization instead of its owner');
+        await this.prisma.users.delete({ where: { id: targetId } });
+        return { message: 'User has been deleted' };
+    }
+
+
 }

@@ -137,7 +137,7 @@ const UserMenu = ({ userName }: UserMenuProps) => {
       {open && (
         <div className="absolute right-0 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1.5 shadow-lg">
           <Link
-            to="/dashboard"
+            to="/crm-dashboard"
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
@@ -226,7 +226,7 @@ export const NavBar = () => {
             {isAuthenticated ? (
               <>
                 <Link
-                  to="/dashboard"
+                  to="/crm-dashboard"
                   onClick={closeMobileMenu}
                   className="text-sm font-semibold text-slate-700 hover:text-slate-900"
                 >

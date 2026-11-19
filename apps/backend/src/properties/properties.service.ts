@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { QueryPropertyDto } from './dto/query-property.dto';
+import { get } from 'http';
 
 @Injectable()
 export class PropertiesService {
@@ -12,7 +13,7 @@ export class PropertiesService {
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 20;
         const where: any = { organization_id: organizationId};
-
+        let orderBy: any = {created_at: 'desc'};
         if (query.city)
             where.city = query.city;
         if (query.listing_type)
@@ -23,11 +24,23 @@ export class PropertiesService {
             where.status = query.status;
         else
             where.status = {not: 'hidden'};
+        if (query.minPrice || query.maxPrice)
+            where.price = {};
+        if (query.maxPrice)
+            where.price.lte = Number(query.maxPrice);
+        if (query.minPrice)
+            where.price.gte = Number(query.minPrice);
+        if (query.bedrooms)
+            where.bedrooms = { gte: Number(query.bedrooms)};
+        if (query.sort === 'price_asc')
+            orderBy = { price: 'asc'};
+        if (query.sort === 'price_desc')
+            orderBy = { price: 'desc'};
         return this.prisma.properties.findMany({
             where: where,
             skip: (page - 1) * limit,
             take: limit,
-            orderBy: {created_at: 'desc'},
+            orderBy: orderBy,
         });
     }
     async findOne(propertyId: string, organizationId: string){

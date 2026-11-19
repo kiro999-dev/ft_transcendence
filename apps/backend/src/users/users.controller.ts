@@ -27,8 +27,19 @@ export class UsersController {
     const userId = req.user.sub;
     const user = await this.userService.findUserbyId(userId);
 
-    if (!user) {
-      throw new NotFoundException('User not found');
+        if (!user) {
+            throw new NotFoundException("User not found");
+        }
+        return {
+            id: user.id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            phone: user.phone,
+            role: user.role,
+            organization_id: user.organization_id,
+            two_fa:user.two_fa
+        };
     }
     return {
       id: user.id,
