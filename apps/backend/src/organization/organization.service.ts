@@ -98,6 +98,7 @@ export class OrganizationService {
                 id: true,
                 first_name: true,
                 last_name: true,
+                email: true,
                 phone: true,
                 role: true,
             },

@@ -4,7 +4,9 @@ import { OrganizationService } from './organization.service';
 import { StaffUserDto } from '../dtos/StaffUserDto';
 import { AuthorizationGuard } from '../guards/authorization.guard';
 import {ROLES } from '../decorator/roles.decorator';
+import type { Role } from '../decorator/roles.decorator';
 import { orgNameDto } from '../dtos/orgName.dto';
+import { request } from 'http';
 import { RoleDto } from '../dtos/role.dto';
 
 @Controller('organization')
