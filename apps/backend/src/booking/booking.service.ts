@@ -264,6 +264,44 @@ for (const rule of rules) {
     });
   }
 
+  async rescheduleVisit(id: string, startsAt: string) {
+    const check_id = await this.prisma.visit.findUnique({ where: { id } });
+    if (!check_id) {
+      throw new NotFoundException('Visit not found for the given ID');
+    }
+    const startDate = new Date(startsAt);
+    const endDate = new Date(startDate.getTime() + 30 * 60 * 1000);
+    const existingConflict = await this.prisma.visit.findFirst({
+      where: {
+        id: { not: id },
+        status: { notIn: ['CANCELLED', 'cancelled'] },
+        OR: [
+          { userId: check_id.userId },
+          { property_id: check_id.property_id },
+        ],
+        AND: [
+          { startAt: { lt: endDate } },
+          { endAt: { gt: startDate } },
+        ],
+      },
+    });
+    if (existingConflict) {
+      throw new ConflictException({
+        error: 'SLOT_UNAVAILABLE',
+        message: 'This time slot is no longer available.',
+      });
+    }
+    return this.prisma.visit.update({
+      where: { id },
+      data: {
+        startAt: startDate,
+        endAt: endDate,
+        date_of_visit: startDate,
+        status: 'confirmed',
+      },
+    });
+  }
+
   async cancelVisit(id: string) {
     const check_id = await this.prisma.visit.findUnique({ where: { id } });
     if (!check_id) {
