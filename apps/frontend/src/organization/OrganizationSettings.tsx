@@ -7,6 +7,7 @@ import { Spinner } from "./componenets/Spinner";
 import { OrganizationNameCard } from "./componenets/OrganizationNameCard";
 import {AddMemberModal} from "./componenets/AddMemberModal"
 import { TeamMembersCard } from "./componenets/TeamMembersCard";
+import { Sidebar } from "../home/componenets/SideBar";
 
 export const OrgSettings = () => {
   const { accessToken, user } = useAuth();
@@ -46,9 +47,13 @@ export const OrgSettings = () => {
   }, [accessToken]);
 
   const currentUserRole = user?.role as Role | undefined;
-
+  const Username = `${user?.first_name} ${user?.last_name}`
   return (
-    <div className="min-h-screen bg-white px-4 py-12">
+    <div className="flex min-h-screen">
+      <Sidebar userName={Username} userEmail={user.email}></Sidebar>
+   
+    <div className="min-h-screen bg-white px-4 py-12 flex-2">
+      
       <div className="mx-auto w-full max-w-2xl">
         <h1 className="text-2xl font-extrabold text-slate-900">
           Organization settings
@@ -60,7 +65,9 @@ export const OrgSettings = () => {
         {loading ? (
           <Spinner />
         ) : (
+          
           <div className="mt-8">
+
             <OrganizationNameCard
               name={orgName}
               canEdit={currentUserRole === "owner"}
@@ -94,6 +101,7 @@ export const OrgSettings = () => {
           onAdded={(member) => setMembers((prev) => [...prev, member])}
         />
       )}
+    </div>
     </div>
   );
 };
