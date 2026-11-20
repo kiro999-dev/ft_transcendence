@@ -1,18 +1,17 @@
 
 export const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+type OnTokenChange = (token: string | null) => void;
+type OnAuthFailure = () => void;
 
 let accessToken: string | null = null;
-
-
-let onTokenChange: (token: string | null) => void = () => {};
-let onAuthFailure: () => void = () => {};
-
-
 let refreshPromise: Promise<string | null> | null = null;
 
+let onTokenChange: OnTokenChange = () => {};
+let onAuthFailure: OnAuthFailure = () => {};
+
 export function configureApiAuth(callbacks: {
-  onTokenChange: (token: string | null) => void;
-  onAuthFailure: () => void;
+  onTokenChange: OnTokenChange
+  onAuthFailure: OnAuthFailure
 }) {
   onTokenChange = callbacks.onTokenChange;
   onAuthFailure = callbacks.onAuthFailure;
