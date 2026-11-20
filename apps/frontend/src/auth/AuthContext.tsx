@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect ,useLayoutEffect} from "react";
 import type { ReactNode } from "react";
 import toast from "react-hot-toast";
-import { apiFetch } from "../lib/api";
 
+import { apiFetch, configureApiAuth, updateAccessToken ,refreshAccessToken,API_URL} from "../lib/api";
 type User = {
-  two_fa?:boolean
+  two_fa?: boolean;
   id: string;
   email: string;
   first_name: string;
@@ -27,79 +27,67 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isAuthenticated = user !== null;
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const refreshResponse = await apiFetch("/auth/refresh", {
-          method: "POST",
-          credentials: "include",
-        });
-
-        if (!refreshResponse.ok) {
-          setUser(null);
-          return;
-        }
-
-        const refreshData = await refreshResponse.json();
-        const newAccessToken = refreshData.accessToken;
-
-        setAccessToken(newAccessToken);
-
-        const userResponse = await apiFetch("/users/me", {
-          headers: {
-            Authorization: `Bearer ${newAccessToken}`,
-          },
-        });
-
-        if (!userResponse.ok) {
-          setUser(null);
-          return;
-        }
-
-        const userData = await userResponse.json();
-        setUser(userData);
-
-      } catch (error) {
-        console.error(error);
-        toast.error("Something went wrong. Please try again.");
+  useLayoutEffect(() => {
+    configureApiAuth({
+      onTokenChange: setAccessTokenState,
+      onAuthFailure: () => {
+        setAccessTokenState(null);
         setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
+      },
+    });
   }, []);
-
-  const logout = async () => {
+   useEffect(() => {
+  const initializeAuth = async () => {
     try {
-      await apiFetch("/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const refreshed = await refreshAccessToken();
+      if (!refreshed) {
+        setUser(null);
+        return;
+      }
+
+      const userResponse = await apiFetch("/users/me");
+      if (!userResponse.ok) {
+        setUser(null);
+        return;
+      }
+      setUser(await userResponse.json());
     } catch (error) {
       console.error(error);
-      // Even if the request fails, still clear local state below,
-      // so the user isn't stuck "logged in" on a dead session.
-    } finally {
-      setAccessToken(null);
+      toast.error("Something went wrong. Please try again.");
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  initializeAuth();
+}, []);
+   const logout = async () => {
+  try {
+    await fetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      headers:{
+        "Authorization":`Bearer ${accessToken}`
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    updateAccessToken(null);
+    setUser(null);
+  }
+};
 
   return (
     <AuthContext.Provider
       value={{
         accessToken,
-        setAccessToken,
+        setAccessToken: updateAccessToken,
         isLoading,
         user,
         isAuthenticated,
@@ -118,6 +106,5 @@ export const useAuth = () => {
   if (!ctx) {
     throw new Error("useAuth must be used within AuthProvider");
   }
-
   return ctx;
 };

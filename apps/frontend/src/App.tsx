@@ -13,7 +13,7 @@ import { Profile } from "./home/componenets/Profile";
 import { ResetPassword } from "./auth/RestPassword";
 import { ChangePassword } from "./auth/ChangePassword";
 import { Crm } from "./home/crm/crm";
-import { OrgSettings } from "./home/componenets/OrganizationSettings";
+import { OrgSettings } from "./organization/OrganizationSettings";
 import { TwoFactor } from "./auth/TwoFactor";
 
 function App() {

@@ -1,1 +1,6 @@
+dk/.env
+dk/.env
 .env
+__pycache__/
+*.pyc
+

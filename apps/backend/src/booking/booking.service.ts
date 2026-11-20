@@ -249,7 +249,7 @@ for (const rule of rules) {
     });
   }
 
-
+  
 
   async getVisits(organizationId: string) {
     if (!organizationId) throw new NotFoundException('Organization not found');

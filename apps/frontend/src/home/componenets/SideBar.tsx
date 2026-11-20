@@ -7,6 +7,7 @@ import { HiOutlineLogout } from "react-icons/hi";
 import { PanelLeft } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
+import { TiGroup } from "react-icons/ti";
 
 type IconProps = { className?: string };
 
@@ -25,6 +26,9 @@ const AvailabilityIcon = () => (
 const PropertiesIcon = () => (
   <IoHomeOutline className="text-xl "></IoHomeOutline>
 );
+const OrganizationIcon = () => (
+  <TiGroup className="text-xl "></TiGroup>
+);
 
 const ChevronIcon = ({ className = "" }: IconProps) => (
  <MdKeyboardArrowRight  className={className}></MdKeyboardArrowRight>
@@ -41,6 +45,7 @@ const navItems: NavItem[] = [
   { name: "Booking", href: "/booking", icon: CalendarIcon },
   { name: "Availability", href: "/availability", icon: AvailabilityIcon },
   { name: "Properties", href: "/properties", icon: PropertiesIcon },
+  {name:"Organization",href:"/organization",icon:OrganizationIcon}
 ];
 
 interface SidebarProps {
