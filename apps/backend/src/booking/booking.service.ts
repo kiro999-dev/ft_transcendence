@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException ,ForbiddenException} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetAvailabilityDto } from '../dtos/availability.dto';
 import { VisitDto } from '../dtos/visit.dto';
@@ -249,8 +249,19 @@ for (const rule of rules) {
     });
   }
 
-  async getVisits() {
-    return this.prisma.visit.findMany({});
+  
+
+  async getVisits(organizationId: string) {
+    if (!organizationId) throw new NotFoundException('Organization not found');
+    return this.prisma.visit.findMany({
+      where: { properties: { organization_id: organizationId } },
+      include: {
+        leads: true,
+        properties: true,
+        // Never return the user's password or tokens.
+        users: { select: { id: true, first_name: true, last_name: true } },
+      },
+    });
   }
 
   async rescheduleVisit(id: string, startsAt: string) {
