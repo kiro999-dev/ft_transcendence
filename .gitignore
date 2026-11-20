@@ -1,2 +1,9 @@
 dk/.env
 dk/.env
+<<<<<<< HEAD
+=======
+.env
+__pycache__/
+*.pyc
+
+>>>>>>> origin/main

@@ -13,9 +13,14 @@ import { Profile } from "./home/componenets/Profile";
 import { ResetPassword } from "./auth/RestPassword";
 import { ChangePassword } from "./auth/ChangePassword";
 import { Crm } from "./home/crm/crm";
+<<<<<<< HEAD
 import { OrgSettings } from "./home/componenets/OrganizationSettings";
 import { TwoFactor } from "./auth/TwoFactor";
 import { Properties } from "./home/properties/properties";
+=======
+import { OrgSettings } from "./organization/OrganizationSettings";
+import { TwoFactor } from "./auth/TwoFactor";
+>>>>>>> origin/main
 
 function App() {
 
@@ -46,7 +51,11 @@ function App() {
           <Route path="/me" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
            <Route path="/organization" element={<OrgSettings/>} />
+<<<<<<< HEAD
            <Route path="/properties" element={<Dashboard><Properties /></Dashboard>} /> 
+=======
+           {/* <Route path="/properties" element={<Dashboard><Properties /></Dashboard>} /> */}
+>>>>>>> origin/main
         </Route>
       </Routes>
 
